@@ -1,4 +1,4 @@
-export const config = { maxDuration: 60 };
+export const maxDuration = 60;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,8 +8,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const apiKey = req.headers['x-api-key'];
-  if (!apiKey) return res.status(400).json({ error: { message: 'API key não informada' } });
+  // Usa env var do Vercel ou key passada pelo cliente
+  const apiKey = process.env.ANTHROPIC_API_KEY || req.headers['x-api-key'];
+  if (!apiKey) return res.status(400).json({ error: { message: 'API key não configurada' } });
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -22,8 +23,8 @@ export default async function handler(req, res) {
       body: JSON.stringify(req.body),
     });
 
-    const data = await response.text();
-    res.status(response.status).setHeader('Content-Type', 'application/json').send(data);
+    const text = await response.text();
+    res.status(response.status).setHeader('Content-Type', 'application/json').send(text);
   } catch (err) {
     res.status(500).json({ error: { message: String(err) } });
   }
