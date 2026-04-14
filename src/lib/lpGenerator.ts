@@ -57,10 +57,10 @@ export async function generateLP(form: FormData, opts: GenerateOptions): Promise
     : 'Sem vídeo.';
 
   const imagesInfo = form.images.length > 0
-    ? form.images.slice(0, 6).map((img, i) => `Imagem ${i + 1} (${img.label}): disponível como base64 — use como src do <img>`).join('\n')
+    ? form.images.slice(0, 6).map((img, i) => `Imagem ${i + 1}: label="${img.label}" — use o placeholder __IMG${i}__ como src, será substituído pelo base64 real`).join('\n')
     : 'Nenhuma imagem. Use fundos com gradiente.';
 
-  const firstImageBase64 = form.images[0]?.base64 ?? '';
+  const hasHeroImage = form.images.length > 0;
   const galleryImages = form.images.slice(0, 6);
 
   const userPrompt = `Você é especialista em landing pages de alta conversão para o mercado imobiliário brasileiro.
@@ -106,11 +106,11 @@ ${imagesInfo}
 === HTML REQUIREMENTS ===
 1. Google Fonts: Playfair Display (títulos) + Inter (corpo) via @import no <style>
 2. Meta Pixel no <head> com PageView + ViewContent no load + Lead no submit
-3. Hero section com fundo: ${firstImageBase64 ? `background-image: url('${firstImageBase64}') com overlay escuro rgba(0,0,0,0.55)` : `gradiente linear de ${form.primaryColor} para #0a0a1a`}
+3. Hero section com fundo: ${hasHeroImage ? `background-image: url('__IMG0__') com overlay escuro rgba(0,0,0,0.55)` : `gradiente linear de ${form.primaryColor} para #0a0a1a`}
 4. Estrutura obrigatória (em ordem):
    a) HERO: headline impactante, subheadline, 3 bullets rápidos, CTA button grande${form.arrows ? ', seta ↓' : ''}${form.highlightConditionTop ? ', caixa de condição destacada' : ''}
    b) BLOCO RÁPIDO: grid 4 colunas com ícones SVG inline (localização, tipologia, metragem, vagas${opts.showPrice && form.price ? ', preço' : ''})
-   c) GALERIA: ${galleryImages.length > 0 ? `${galleryImages.length} imagens base64 em grid com legendas` : '3 cards com gradiente e ícone'}
+   c) GALERIA: ${galleryImages.length > 0 ? `${galleryImages.length} imagens com src __IMG0__, __IMG1__, __IMG2__... e legendas` : '3 cards com gradiente e ícone'}
    d) DIFERENCIAIS: lista visual com ícones SVG inline, máximo 6 itens
    e) CONDIÇÃO COMERCIAL: ${opts.showPrice ? '3 cards: Entrada | Parcelas | Financiamento com microcopy de escassez' : 'CTA para receber condições + microcopy de escassez'}
    f) BLOCO INVESTIMENTO: ${lpType === 'moradia' ? 'versão suave — "além de morar bem, seu patrimônio valoriza"' : 'completo — valorização, demanda da região, retorno estimado'}
@@ -152,9 +152,14 @@ Gere APENAS o HTML, começando com <!DOCTYPE html>. Sem explicações:`;
 
   // Limpa qualquer markdown que a IA possa ter colocado
   const match = rawHtml.match(/<!DOCTYPE html[\s\S]*/i) ?? rawHtml.match(/<html[\s\S]*/i);
-  if (match) return match[0];
-
-  // Remove blocos de código markdown se houver
   const stripped = rawHtml.replace(/^```html?\n?/i, '').replace(/```\s*$/i, '').trim();
-  return stripped;
+  let finalHtml = match ? match[0] : stripped;
+
+  // Substituir placeholders __IMG0__, __IMG1__... pelos base64 reais
+  form.images.slice(0, 6).forEach((img, i) => {
+    const placeholder = new RegExp(`__IMG${i}__`, 'g');
+    finalHtml = finalHtml.replace(placeholder, img.base64);
+  });
+
+  return finalHtml;
 }
