@@ -314,7 +314,7 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
     <div class="feat-item"><div class="feat-icon">${svgDiamond}</div><div class="feat-text"><strong>${copy.diff4title}</strong><span>${copy.diff4desc}</span></div></div>
   </div>
 </section>
-<section class="wa-mid fade-in">
+<section class="wa-mid-placeholder">
   <p class="wa-trigger">${copy.whatsappTrigger}</p>
   <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="wa-btn-mid" target="_blank">${svgWa} ${copy.whatsappCta}</a>
 </section>
@@ -641,4 +641,101 @@ export async function generateLP(form: FormData, opts: GenerateOptions): Promise
     return buildTemplateInvestor(form, { showPrice: opts.showPrice }, copy);
   }
   return buildTemplateDefault(form, { showPrice: opts.showPrice }, copy);
+}
+
+
+export function getGithubToken(): string {
+  return localStorage.getItem('github_token') ?? '';
+}
+export function setGithubToken(key: string) {
+  localStorage.setItem('github_token', key);
+}
+export function getVercelToken(): string {
+  return localStorage.getItem('vercel_token') ?? '';
+}
+export function setVercelToken(key: string) {
+  localStorage.setItem('vercel_token', key);
+}
+
+function toSlug(name: string): string {
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
+export async function publishLP(name: string, html: string): Promise<string> {
+  const githubToken = getGithubToken();
+  const vercelToken = getVercelToken();
+  if (!githubToken) throw new Error('Token do GitHub nao configurado.');
+  if (!vercelToken) throw new Error('Token do Vercel nao configurado.');
+
+  const slug = toSlug(name);
+  const repoName = `lp-${slug}`;
+  const content = btoa(unescape(encodeURIComponent(html)));
+
+  // 1. Criar repositorio no GitHub
+  const createRepo = await fetch('https://api.github.com/user/repos', {
+    method: 'POST',
+    headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: repoName, private: false, auto_init: false }),
+  });
+
+  let repoFullName = '';
+  if (createRepo.ok) {
+    const repoData = await createRepo.json() as { full_name: string };
+    repoFullName = repoData.full_name;
+  } else {
+    // Repositorio ja existe — buscar usuario
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `token ${githubToken}` },
+    });
+    const userData = await userRes.json() as { login: string };
+    repoFullName = `${userData.login}/${repoName}`;
+  }
+
+  // 2. Commit do index.html
+  const fileRes = await fetch(`https://api.github.com/repos/${repoFullName}/contents/index.html`, {
+    headers: { 'Authorization': `token ${githubToken}` },
+  });
+  let sha = '';
+  if (fileRes.ok) {
+    const fileData = await fileRes.json() as { sha: string };
+    sha = fileData.sha;
+  }
+
+  await fetch(`https://api.github.com/repos/${repoFullName}/contents/index.html`, {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: `deploy: ${name}`,
+      content,
+      ...(sha ? { sha } : {}),
+    }),
+  });
+
+  // 3. Deploy no Vercel via API
+  const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${vercelToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: repoName,
+      gitSource: {
+        type: 'github',
+        repoId: repoFullName,
+        ref: 'main',
+      },
+      projectSettings: { framework: null },
+    }),
+  });
+
+  if (!deployRes.ok) {
+    const err = await deployRes.json() as { error?: { message?: string } };
+    throw new Error(err.error?.message ?? 'Erro no deploy Vercel');
+  }
+
+  const deployData = await deployRes.json() as { url: string };
+  return `https://${deployData.url}`;
 }

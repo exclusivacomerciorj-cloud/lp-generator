@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { Screen } from '../components/StepLayout';
 import { FormData, GeneratedLP } from '../types';
-import { getApiKey } from '../lib/lpGenerator';
+import { getApiKey, publishLP } from '../lib/lpGenerator';
 
 interface Props {
   form: FormData;
@@ -20,7 +20,20 @@ export default function StepResult({ form, goTo, generatedLPs, setGeneratedLPs, 
   const [refineError, setRefineError] = useState('');
   const [saved, setSaved] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop'|'mobile'>('desktop');
+  const [publishing, setPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState('');
+  const [publishError, setPublishError] = useState('');
   const active = generatedLPs[activeIdx];
+
+  // URL publicada
+  const publishedBlock = publishedUrl ? (
+    <div style={{ padding: '8px 16px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontSize: 12, color: '#4ade80' }}>&#10003; Publicado:</span>
+      <a href={publishedUrl} target='_blank' style={{ fontSize: 12, color: '#4ade80', textDecoration: 'underline' }}>{publishedUrl}</a>
+      <button onClick={() => navigator.clipboard.writeText(publishedUrl)} style={{ padding: '4px 10px', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 6, color: '#4ade80', fontSize: 11, cursor: 'pointer' }}>Copiar</button>
+    </div>) : null;
+  const publishErrorBlock = publishError ? (
+    <div style={{ padding: '8px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, fontSize: 12, color: '#f87171' }}>&#9888; {publishError}</div>) : null;
 
   const download = (lp: GeneratedLP) => {
     const blob = new Blob([lp.html], { type: 'text/html;charset=utf-8' });
@@ -30,6 +43,18 @@ export default function StepResult({ form, goTo, generatedLPs, setGeneratedLPs, 
     a.download = `${lp.name.replace(/\s+/g,'-').toLowerCase()}-${lp.variant.replace(/[\s/]+/g,'-').toLowerCase()}.html`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handlePublish = async () => {
+    setPublishing(true); setPublishError(''); setPublishedUrl('');
+    try {
+      const url = await publishLP(active.name, active.html);
+      setPublishedUrl(url);
+    } catch (err: unknown) {
+      setPublishError(String(err));
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const refineLP = async () => {
@@ -145,3 +170,8 @@ export default function StepResult({ form, goTo, generatedLPs, setGeneratedLPs, 
     </div>
   );
 }
+
+
+
+
+
