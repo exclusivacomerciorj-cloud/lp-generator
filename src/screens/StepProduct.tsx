@@ -47,9 +47,9 @@ async function fetchProductInfo(name: string, apiKey: string) {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json() as { content?: { type: string; text?: string }[] };
   const textBlocks = (data.content ?? []).filter((b: { type: string }) => b.type === 'text' && (b as { text?: string }).text);
-  const lastText = (textBlocks[textBlocks.length - 1] as { text?: string })?.text ?? '';
+  const lastText = ((textBlocks[textBlocks.length - 1] as { text?: string })?.text ?? '').replace(/<cite[^>]*>/g, '').replace(/<\/cite>/g, '');
   const jsonMatch = lastText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return { found: false };
+  if (!jsonMatch) return { found: false }; 
   try { return JSON.parse(jsonMatch[0]); } catch { return { found: false }; }
 }
 
@@ -269,5 +269,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
     </StepLayout>
   );
 }
+
+
 
 
