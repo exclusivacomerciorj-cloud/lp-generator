@@ -15,6 +15,28 @@ export function setApiKey(key: string) {
   localStorage.setItem('anthropic_api_key', key);
 }
 
+export function getGithubToken(): string {
+  return localStorage.getItem('github_token') ?? '';
+}
+export function setGithubToken(key: string) {
+  localStorage.setItem('github_token', key);
+}
+export function getVercelToken(): string {
+  return localStorage.getItem('vercel_token') ?? '';
+}
+export function setVercelToken(key: string) {
+  localStorage.setItem('vercel_token', key);
+}
+
+function toSlug(name: string): string {
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
 async function generateCopy(form: FormData, opts: GenerateOptions, apiKey: string) {
   const lpType = opts.overrideType ?? form.lpType;
   const sp = form.strongPoints.length > 0 ? form.strongPoints : ['Lazer completo', 'Localizacao premium', 'Vista privilegiada', 'Construtora solida'];
@@ -96,7 +118,7 @@ ${form.description ? `Descricao existente (use como base): ${form.description}` 
 
 REGRAS CRITICAS:
 - NUNCA inventar numeros, unidades ou dados
-- NUNCA usar asteriscos (*texto*) — itálico via HTML ja sera aplicado
+- NUNCA usar asteriscos (*texto*) — italico via HTML ja sera aplicado
 - Usar APENAS dados informados acima
 - Headlines devem ser diferentes entre versao A e B
 - Headline versao ${opts.headlineVariant === 'B' ? 'B: criativa, inesperada, diferente da convencional' : 'A: direta, clara, focada no principal gatilho'}
@@ -197,6 +219,7 @@ function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy
 .hero{min-height:100vh;background:${heroBg};display:flex;flex-direction:column;position:relative;}
 .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.45) 0%,rgba(0,0,0,0.28) 50%,rgba(0,0,0,0.58) 100%);}
 .hero-logo{position:absolute;top:20px;left:24px;z-index:3;}
+.hero-wa-top{display:none;}
 .hero-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:80px 20px 60px;text-align:center;}
 .hero-headline{font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,54px);color:#fff;line-height:1.25;margin-bottom:22px;}
 .hero-headline em{font-style:italic;}
@@ -218,7 +241,7 @@ function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy
 .ben-text span{font-size:11px;color:#666;}
 .ben-sep{width:1px;height:52px;background:#e8e8e8;flex-shrink:0;}
 .desc-block{background:#fff;padding:40px 20px 0;}
-.desc-inner{max-width:720px;margin:0 auto;text-align:center;font-size:15px;color:#444;line-height:1.8;font-family:'Playfair Display',serif;font-style:italic;border-left:3px solid ${sc};padding-left:20px;text-align:left;}
+.desc-inner{max-width:720px;margin:0 auto;font-size:15px;color:#444;line-height:1.8;font-family:'Playfair Display',serif;font-style:italic;border-left:3px solid ${sc};padding-left:20px;}
 .gallery{background:#f0f4f8;padding:56px 20px;}
 .sec-title{font-family:'Playfair Display',serif;font-size:clamp(20px,3.5vw,30px);color:${pc};text-align:center;margin-bottom:10px;}
 .sec-div{display:flex;align-items:center;gap:14px;max-width:280px;margin:0 auto 34px;}
@@ -227,6 +250,11 @@ function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy
 .gal-item img{width:100%;height:220px;object-fit:cover;border-radius:3px;display:block;}
 .gal-ph{width:100%;height:220px;border-radius:3px;}
 .gal-item figcaption{font-family:'Playfair Display',serif;font-style:italic;font-size:12px;color:#666;text-align:center;margin-top:7px;}
+.wa-mid{background:#f8f9fb;padding:32px 20px;text-align:center;border-top:1px solid #eee;display:flex;flex-direction:column;align-items:center;}
+.wa-trigger{font-family:'Playfair Display',serif;font-size:clamp(16px,2.5vw,22px);color:${pc};margin-bottom:16px;font-style:italic;}
+.wa-btn-mid{display:inline-flex;align-items:center;gap:10px;background:#25D366;color:#fff;padding:13px 28px;border-radius:3px;text-decoration:none;font-weight:700;font-size:14px;transition:all 0.3s;}
+.wa-btn-mid:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(37,211,102,0.4);}
+.wa-btn-mid svg{width:20px;height:20px;fill:#fff;}
 .features{background:#fff;padding:56px 20px;}
 .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px;margin:0 auto;}
 .feat-item{display:flex;align-items:flex-start;gap:14px;padding:16px;border-radius:6px;background:#f8f9fb;}
@@ -234,11 +262,6 @@ function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy
 .feat-icon svg{width:100%;height:100%;}
 .feat-text strong{display:block;font-size:13px;font-weight:700;color:${pc};margin-bottom:3px;}
 .feat-text span{font-size:11px;color:#666;line-height:1.5;}
-.wa-mid{background:#f8f9fb;padding:32px 20px;text-align:center;border-top:1px solid #eee;}
-.wa-trigger{font-family:'Playfair Display',serif;font-size:clamp(16px,2.5vw,22px);color:${pc};margin-bottom:16px;font-style:italic;}
-.wa-btn-mid{display:inline-flex;align-items:center;gap:10px;background:#25D366;color:#fff;padding:13px 28px;border-radius:3px;text-decoration:none;font-weight:700;font-size:14px;transition:all 0.3s;}
-.wa-btn-mid:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(37,211,102,0.4);}
-.wa-btn-mid svg{width:20px;height:20px;fill:#fff;}
 .conditions{background:${pc};padding:56px 20px;}
 .conditions .sec-title{color:#fff;}
 .conditions .sec-div::before,.conditions .sec-div::after{background:rgba(201,168,76,0.4);}
@@ -271,7 +294,9 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
   .ben-sep{display:none;}.ben-grid{flex-direction:column;align-items:flex-start;}
   .gal-grid{grid-template-columns:1fr;}.feat-grid{grid-template-columns:1fr;}
   .cond-grid{grid-template-columns:1fr;}
-  .hero-content{padding:80px 16px 48px;}
+  .hero-content{padding:120px 16px 80px;}
+  .hero-logo{top:60px;left:50%;transform:translateX(-50%);}
+  .hero-wa-top{display:flex;position:absolute;bottom:0;left:0;right:0;z-index:3;background:#25D366;color:#fff;font-weight:700;font-size:14px;padding:14px;align-items:center;justify-content:center;gap:10px;text-decoration:none;}
   .gallery,.features,.conditions{padding:40px 16px;}
   .form-sec{padding:48px 16px;}.form-box{padding:18px 14px;}
 }
@@ -288,6 +313,7 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
     <span class="hero-arrow">&#8595;</span>
     <a href="#formulario" class="btn-cta">${copy.ctaText}</a>
   </div>
+  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="hero-wa-top" target="_blank">${svgWa} ${copy.whatsappCta}</a>
 </section>
 <section class="benefits fade-in">
   <div class="ben-grid">
@@ -304,6 +330,10 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
   <div class="sec-div"></div>
   <div class="gal-grid">${galleryHtml}</div>
 </section>
+<section class="wa-mid fade-in">
+  <p class="wa-trigger">${copy.whatsappTrigger}</p>
+  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="wa-btn-mid" target="_blank">${svgWa} ${copy.whatsappCta}</a>
+</section>
 <section class="features fade-in">
   <h2 class="sec-title">Por que escolher o ${form.name}?</h2>
   <div class="sec-div"></div>
@@ -313,10 +343,6 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
     <div class="feat-item"><div class="feat-icon">${svgPin}</div><div class="feat-text"><strong>${copy.diff3title}</strong><span>${copy.diff3desc}</span></div></div>
     <div class="feat-item"><div class="feat-icon">${svgDiamond}</div><div class="feat-text"><strong>${copy.diff4title}</strong><span>${copy.diff4desc}</span></div></div>
   </div>
-</section>
-<section class="wa-mid-placeholder">
-  <p class="wa-trigger">${copy.whatsappTrigger}</p>
-  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="wa-btn-mid" target="_blank">${svgWa} ${copy.whatsappCta}</a>
 </section>
 <section class="conditions fade-in">
   <h2 class="sec-title">Condicoes Imperdiveis</h2>
@@ -424,6 +450,7 @@ function buildTemplateInvestor(form: FormData, opts: { showPrice: boolean }, cop
 .hero{min-height:100vh;background:${heroBg};display:flex;flex-direction:column;position:relative;}
 .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(6,15,30,0.55) 0%,rgba(6,15,30,0.38) 45%,rgba(6,15,30,0.82) 100%);}
 .hero-logo{position:absolute;top:20px;left:24px;z-index:3;}
+.hero-wa-top{display:none;}
 .hero-badge{position:absolute;top:20px;right:20px;z-index:3;font-size:9px;color:${sc};background:rgba(201,168,76,0.12);border:0.5px solid rgba(201,168,76,0.35);padding:4px 10px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;}
 .hero-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:90px 20px 60px;text-align:center;}
 .hero-headline{font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,52px);color:#fff;line-height:1.25;margin-bottom:20px;}
@@ -466,8 +493,8 @@ function buildTemplateInvestor(form: FormData, opts: { showPrice: boolean }, cop
 .simul-item span{font-size:12px;color:rgba(255,255,255,0.6);}
 .simul-item strong{color:#fff;font-weight:500;}
 .simul-chart{flex-shrink:0;display:flex;align-items:flex-end;gap:4px;height:70px;}
-.bar{width:12px;background:rgba(201,168,76,0.3);border-radius:2px 2px 0 0;transition:all 0.3s;}
-.simul-cta{margin-top:16px;border:0.5px solid rgba(201,168,76,0.3);border-radius:3px;padding:10px;font-size:11px;color:${sc};text-align:center;cursor:pointer;text-decoration:none;display:block;max-width:700px;margin:16px auto 0;}
+.bar{width:12px;background:rgba(201,168,76,0.3);border-radius:2px 2px 0 0;}
+.simul-cta{border:0.5px solid rgba(201,168,76,0.3);border-radius:3px;padding:10px;font-size:11px;color:${sc};text-align:center;cursor:pointer;text-decoration:none;display:block;max-width:700px;margin:16px auto 0;}
 .simul-cta:hover{background:rgba(201,168,76,0.08);}
 .why{background:#0d1a2e;padding:40px 20px;border-top:0.5px solid rgba(201,168,76,0.12);}
 .why .sec-title{color:#fff;}
@@ -507,7 +534,9 @@ footer{background:#030810;padding:14px 20px;text-align:center;color:rgba(255,255
 @media(max-width:768px){
   .rent-grid,.why-grid,.cond-grid,.gal-grid,.specs-grid{grid-template-columns:1fr;}
   .simul-chart{display:none;}
-  .hero-content{padding:90px 16px 48px;}
+  .hero-content{padding:120px 16px 80px;}
+  .hero-logo{top:60px;left:50%;transform:translateX(-50%);}
+  .hero-wa-top{display:flex;position:absolute;bottom:0;left:0;right:0;z-index:3;background:#25D366;color:#fff;font-weight:700;font-size:14px;padding:14px;align-items:center;justify-content:center;gap:10px;text-decoration:none;}
   .rent-sec,.empreend,.simul,.why,.cond-sec{padding:32px 16px;}
   .form-sec{padding:40px 16px;}.form-box{padding:16px 12px;}
 }
@@ -525,22 +554,20 @@ footer{background:#030810;padding:14px 20px;text-align:center;color:rgba(255,255
     <span class="hero-arrow">&#8595;</span>
     <a href="#formulario" class="btn-cta">${copy.ctaText}</a>
   </div>
+  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="hero-wa-top" target="_blank">${svgWa} ${copy.whatsappCta}</a>
 </section>
-
 <section class="rent-sec fade-in">
   <h2 class="sec-title">Potencial de Retorno</h2>
   <div class="sec-div"></div>
   <div class="rent-grid">${rentCards}</div>
   <p class="rent-desc">${copy.descricaoBloco}</p>
 </section>
-
 <section class="empreend fade-in">
   <h2 class="sec-title">O Empreendimento</h2>
   <div class="sec-div"></div>
   <div class="gal-grid">${galleryHtml}</div>
   <div class="specs-grid">${specsHtml}</div>
 </section>
-
 <section class="simul fade-in">
   <h2 class="sec-title">Simulacao de Cenario</h2>
   <div class="sec-div"></div>
@@ -563,7 +590,6 @@ footer{background:#030810;padding:14px 20px;text-align:center;color:rgba(255,255
   </div>
   <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent('Quero receber a simulacao de rendimento - ' + form.name)}" class="simul-cta" target="_blank">${copy.whatsappTrigger} → ${copy.whatsappCta}</a>
 </section>
-
 <section class="why fade-in">
   <h2 class="sec-title">Por que investir aqui?</h2>
   <div class="sec-div"></div>
@@ -585,14 +611,12 @@ footer{background:#030810;padding:14px 20px;text-align:center;color:rgba(255,255
     </div>
   </div>
 </section>
-
 <section class="cond-sec fade-in">
   <h2 class="sec-title">Condicoes Imperdiveis</h2>
   <div class="sec-div"></div>
   <div class="cond-grid">${condCards}</div>
   <p class="cond-esc">${copy.escassez}</p>
 </section>
-
 <section class="form-sec" id="formulario">
   <div class="form-ov"></div>
   <div class="form-cnt fade-in">
@@ -633,37 +657,12 @@ document.querySelector('.btn-cta').addEventListener('click',function(e){e.preven
 export async function generateLP(form: FormData, opts: GenerateOptions): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error('API key nao configurada.');
-
   const lpType = opts.overrideType ?? form.lpType;
   const copy = await generateCopy({ ...form, lpType }, opts, apiKey);
-
   if (lpType === 'investimento') {
     return buildTemplateInvestor(form, { showPrice: opts.showPrice }, copy);
   }
   return buildTemplateDefault(form, { showPrice: opts.showPrice }, copy);
-}
-
-
-export function getGithubToken(): string {
-  return localStorage.getItem('github_token') ?? '';
-}
-export function setGithubToken(key: string) {
-  localStorage.setItem('github_token', key);
-}
-export function getVercelToken(): string {
-  return localStorage.getItem('vercel_token') ?? '';
-}
-export function setVercelToken(key: string) {
-  localStorage.setItem('vercel_token', key);
-}
-
-function toSlug(name: string): string {
-  return name.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
 }
 
 export async function publishLP(name: string, html: string): Promise<string> {
@@ -678,7 +677,6 @@ export async function publishLP(name: string, html: string): Promise<string> {
   const filePath = `${slug}/index.html`;
   const content = btoa(unescape(encodeURIComponent(html)));
 
-  // 1. Verificar se o arquivo ja existe (para pegar o sha)
   let sha = '';
   try {
     const fileRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
@@ -690,7 +688,6 @@ export async function publishLP(name: string, html: string): Promise<string> {
     }
   } catch { /* arquivo nao existe ainda */ }
 
-  // 2. Commit do arquivo
   const commitRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
     method: 'PUT',
     headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
@@ -706,7 +703,6 @@ export async function publishLP(name: string, html: string): Promise<string> {
     throw new Error(err.message ?? 'Erro ao fazer commit no GitHub');
   }
 
-  // 3. Deploy no Vercel
   const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${vercelToken}`, 'Content-Type': 'application/json' },
