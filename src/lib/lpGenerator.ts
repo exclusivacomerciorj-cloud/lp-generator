@@ -673,40 +673,25 @@ export async function publishLP(name: string, html: string): Promise<string> {
   if (!vercelToken) throw new Error('Token do Vercel nao configurado.');
 
   const slug = toSlug(name);
-  const repoName = `lp-${slug}`;
+  const repoOwner = 'exclusivacomerciorj-cloud';
+  const repoName = 'exclusiva-lps';
+  const filePath = `${slug}/index.html`;
   const content = btoa(unescape(encodeURIComponent(html)));
 
-  // 1. Criar repositorio no GitHub
-  const createRepo = await fetch('https://api.github.com/user/repos', {
-    method: 'POST',
-    headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: repoName, private: false, auto_init: false }),
-  });
-
-  let repoFullName = '';
-  if (createRepo.ok) {
-    const repoData = await createRepo.json() as { full_name: string };
-    repoFullName = repoData.full_name;
-  } else {
-    // Repositorio ja existe — buscar usuario
-    const userRes = await fetch('https://api.github.com/user', {
+  // 1. Verificar se o arquivo ja existe (para pegar o sha)
+  let sha = '';
+  try {
+    const fileRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
       headers: { 'Authorization': `token ${githubToken}` },
     });
-    const userData = await userRes.json() as { login: string };
-    repoFullName = `${userData.login}/${repoName}`;
-  }
+    if (fileRes.ok) {
+      const fileData = await fileRes.json() as { sha: string };
+      sha = fileData.sha;
+    }
+  } catch { /* arquivo nao existe ainda */ }
 
-  // 2. Commit do index.html
-  const fileRes = await fetch(`https://api.github.com/repos/${repoFullName}/contents/index.html`, {
-    headers: { 'Authorization': `token ${githubToken}` },
-  });
-  let sha = '';
-  if (fileRes.ok) {
-    const fileData = await fileRes.json() as { sha: string };
-    sha = fileData.sha;
-  }
-
-  await fetch(`https://api.github.com/repos/${repoFullName}/contents/index.html`, {
+  // 2. Commit do arquivo
+  const commitRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
     method: 'PUT',
     headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -716,7 +701,12 @@ export async function publishLP(name: string, html: string): Promise<string> {
     }),
   });
 
-  // 3. Deploy no Vercel via API
+  if (!commitRes.ok) {
+    const err = await commitRes.json() as { message?: string };
+    throw new Error(err.message ?? 'Erro ao fazer commit no GitHub');
+  }
+
+  // 3. Deploy no Vercel
   const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${vercelToken}`, 'Content-Type': 'application/json' },
@@ -724,7 +714,8 @@ export async function publishLP(name: string, html: string): Promise<string> {
       name: repoName,
       gitSource: {
         type: 'github',
-        repoId: repoFullName,
+        org: repoOwner,
+        repo: repoName,
         ref: 'main',
       },
       projectSettings: { framework: null },
@@ -737,5 +728,5 @@ export async function publishLP(name: string, html: string): Promise<string> {
   }
 
   const deployData = await deployRes.json() as { url: string };
-  return `https://${deployData.url}`;
+  return `https://${deployData.url}/${slug}`;
 }
