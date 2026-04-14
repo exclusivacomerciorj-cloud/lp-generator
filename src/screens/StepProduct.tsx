@@ -74,7 +74,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
           isHero: false,
           inGallery: false,
         };
-        updateForm({ images: [...form.images, img] });
+        updateForm({ images: [...form.images, img] }); form.images.push(img);
       };
       reader.readAsDataURL(file);
     });
@@ -269,3 +269,5 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
     </StepLayout>
   );
 }
+
+
