@@ -1,8 +1,10 @@
-export interface ImageFile {
+﻿export interface ImageFile {
   id: string;
   name: string;
   base64: string;
   label: string;
+  isHero: boolean;
+  inGallery: boolean;
 }
 
 export interface FormData {
@@ -39,6 +41,8 @@ export interface FormData {
   pixelId: string;
   formEmail: string;
   images: ImageFile[];
+  logoType: 'text' | 'image';
+  logoBase64: string;
 }
 
 export interface GeneratedLP {

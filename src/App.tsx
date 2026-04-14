@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Screen } from './components/StepLayout';
 import { FormData, GeneratedLP } from './types';
 import Dashboard from './screens/Dashboard';
@@ -21,7 +21,7 @@ const INITIAL: FormData = {
   animations: true, arrows: true, hasVideo: false, videoUrl: '', videoType: 'drone',
   withPrice: true, withoutPrice: false, investorVersion: false, housingVersion: false, headlineVariation: false,
   whatsapp: '5521990975268', pixelId: '952987786056843', formEmail: 'vitortavares.lopesrio@gmail.com',
-  images: [],
+  images: [], logoType: 'text', logoBase64: '',
 };
 
 export default function App() {
@@ -73,3 +73,4 @@ export default function App() {
     </div>
   );
 }
+

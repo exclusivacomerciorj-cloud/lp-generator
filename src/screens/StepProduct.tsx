@@ -28,52 +28,7 @@ function Field({ label, placeholder, value, onChange, textarea }: {
   );
 }
 
-interface AutoFillResult {
-  found: boolean;
-  location?: string;
-  typology?: string;
-  area?: string;
-  parking?: string;
-  differentials?: string;
-  price?: string;
-  entry?: string;
-  installments?: string;
-  strongPoints?: string[];
-  lpType?: 'moradia' | 'investimento' | 'neutra';
-  mainTrigger?: 'preco' | 'localizacao' | 'vista' | 'condicao';
-  summary?: string;
-}
-
-async function fetchProductInfo(name: string, apiKey: string): Promise<AutoFillResult> {
-  const prompt = `Você é um assistente especialista em pesquisa de lançamentos imobiliários no Brasil.
-
-Pesquise na web todas as informações disponíveis sobre o empreendimento imobiliário chamado: "${name}"
-
-Após pesquisar, retorne APENAS um JSON válido com estas informações (deixe "" se nÁo encontrar):
-
-{
-  "found": true,
-  "location": "Bairro, Cidade - UF",
-  "typology": "ex: Apartamentos de 2 e 3 quartos",
-  "area": "ex: 65mÂ² a 88mÂ²",
-  "parking": "ex: 1 a 2 vagas",
-  "price": "ex: R$ 800.000",
-  "entry": "ex: R$ 49.000",
-  "installments": "ex: R$ 1.900/mês durante a obra",
-  "differentials": "DescriçÁo completa dos diferenciais: lazer, infraestrutura, localizaçÁo, sustentabilidade...",
-  "strongPoints": ["Ponto forte 1", "Ponto forte 2", "Ponto forte 3", "Ponto forte 4", "Ponto forte 5"],
-  "lpType": "moradia ou investimento ou neutra",
-  "mainTrigger": "preco ou localizacao ou vista ou condicao",
-  "summary": "Resumo de 1-2 frases sobre o empreendimento"
-}
-
-REGRAS:
-- Retorne SOMENTE o JSON, sem texto antes ou depois, sem markdown
-- Se nÁo encontrar, retorne {"found": false}
-- strongPoints: tags curtas (ex: "Varanda gourmet", "Vista para o mar")
-- lpType: studios/compactos = "investimento", 3+ quartos familiar = "moradia", misto = "neutra"
-- mainTrigger: preço especial = "preco", localizaçÁo = "localizacao", vista = "vista", condiçÁo = "condicao"`;
-
+async function fetchProductInfo(name: string, apiKey: string) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -86,36 +41,23 @@ REGRAS:
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: `Pesquise informacoes sobre o empreendimento imobiliario: "${name}". Retorne APENAS JSON valido sem markdown:\n{"found":true,"location":"","typology":"","area":"","parking":"","price":"","entry":"","installments":"","differentials":"","strongPoints":[""],"lpType":"neutra","mainTrigger":"localizacao","summary":""}` }],
     }),
   });
-
-  if (!response.ok) {
-    const err = await response.json() as { error?: { message?: string } };
-    throw new Error(err.error?.message ?? `HTTP ${response.status}`);
-  }
-
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json() as { content?: { type: string; text?: string }[] };
-
-  // Pega o Áºltimo bloco de texto â€” resposta final após a busca
-  const textBlocks = (data.content ?? []).filter(b => b.type === 'text' && b.text);
-  const lastText = textBlocks[textBlocks.length - 1]?.text ?? '';
-
-  // Extrai JSON da resposta
+  const textBlocks = (data.content ?? []).filter((b: { type: string }) => b.type === 'text' && (b as { text?: string }).text);
+  const lastText = (textBlocks[textBlocks.length - 1] as { text?: string })?.text ?? '';
   const jsonMatch = lastText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) return { found: false };
-
-  try {
-    return JSON.parse(jsonMatch[0]) as AutoFillResult;
-  } catch {
-    return { found: false };
-  }
+  try { return JSON.parse(jsonMatch[0]); } catch { return { found: false }; }
 }
 
 export default function StepProduct({ form, updateForm, goTo }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
   const [searching, setSearching] = useState(false);
-  const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'found' | 'notfound' | 'error'>('idle');
+  const [searchStatus, setSearchStatus] = useState<'idle'|'searching'|'found'|'notfound'|'error'>('idle');
   const [searchMsg, setSearchMsg] = useState('');
   const [filledFields, setFilledFields] = useState<string[]>([]);
 
@@ -129,6 +71,8 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
           name: file.name,
           base64: ev.target?.result as string,
           label: file.name.replace(/\.[^.]+$/, ''),
+          isHero: false,
+          inGallery: false,
         };
         updateForm({ images: [...form.images, img] });
       };
@@ -137,244 +81,191 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
     e.target.value = '';
   };
 
+  const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => updateForm({ logoBase64: ev.target?.result as string });
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const toggleHero = (id: string) => {
+    updateForm({ images: form.images.map(img => ({ ...img, isHero: img.id === id })) });
+  };
+
+  const toggleGallery = (id: string) => {
+    const img = form.images.find(i => i.id === id);
+    if (!img) return;
+    const galleryCount = form.images.filter(i => i.inGallery).length;
+    if (!img.inGallery && galleryCount >= 3) return;
+    updateForm({ images: form.images.map(i => i.id === id ? { ...i, inGallery: !i.inGallery } : i) });
+  };
+
+  const removeImage = (id: string) => updateForm({ images: form.images.filter(i => i.id !== id) });
+
   const handleAutoFill = async () => {
     if (!form.name.trim()) return;
     setSearching(true);
     setSearchStatus('searching');
     setSearchMsg('');
     setFilledFields([]);
-
     try {
       const apiKey = getApiKey();
-      if (!apiKey) throw new Error('API key nÁo configurada. Volte ao dashboard e configure.');
+      if (!apiKey) throw new Error('API key nao configurada.');
       const result = await fetchProductInfo(form.name.trim(), apiKey);
-
-      if (!result.found) {
-        setSearchStatus('notfound');
-        setSearchMsg('NÁo encontrei informações sobre esse empreendimento na web. Preencha os campos manualmente.');
-        return;
-      }
-
+      if (!result.found) { setSearchStatus('notfound'); setSearchMsg('Nao encontrei informacoes. Preencha manualmente.'); return; }
       const updates: Partial<FormData> = {};
       const filled: string[] = [];
-
-      if (result.location)     { updates.location     = result.location;     filled.push('LocalizaçÁo'); }
-      if (result.typology)     { updates.typology     = result.typology;     filled.push('Tipologia'); }
-      if (result.area)         { updates.area         = result.area;         filled.push('Metragem'); }
-      if (result.parking)      { updates.parking      = result.parking;      filled.push('Vagas'); }
-      if (result.differentials){ updates.differentials= result.differentials; filled.push('Diferenciais'); }
-      if (result.price)        { updates.price        = result.price;        filled.push('Preço'); }
-      if (result.entry)        { updates.entry        = result.entry;        filled.push('Entrada'); }
+      if (result.location) { updates.location = result.location; filled.push('Localizacao'); }
+      if (result.typology) { updates.typology = result.typology; filled.push('Tipologia'); }
+      if (result.area) { updates.area = result.area; filled.push('Metragem'); }
+      if (result.parking) { updates.parking = result.parking; filled.push('Vagas'); }
+      if (result.differentials) { updates.differentials = result.differentials; filled.push('Diferenciais'); }
+      if (result.price) { updates.price = result.price; filled.push('Preco'); }
+      if (result.entry) { updates.entry = result.entry; filled.push('Entrada'); }
       if (result.installments) { updates.installments = result.installments; filled.push('Parcelas'); }
-      if (result.lpType)       { updates.lpType       = result.lpType;       filled.push('Tipo de LP'); }
-      if (result.mainTrigger)  { updates.mainTrigger  = result.mainTrigger;  filled.push('Gatilho principal'); }
-      if (result.strongPoints && result.strongPoints.length > 0) {
-        updates.strongPoints = result.strongPoints;
-        filled.push('Pontos fortes');
-      }
-
+      if (result.lpType) updates.lpType = result.lpType;
+      if (result.mainTrigger) updates.mainTrigger = result.mainTrigger;
+      if (result.strongPoints?.length) { updates.strongPoints = result.strongPoints; filled.push('Pontos fortes'); }
       updateForm(updates);
       setFilledFields(filled);
       setSearchStatus('found');
-      setSearchMsg(result.summary ?? 'Informações preenchidas. Confira e ajuste se necessário.');
-    } catch (err: unknown) {
+      setSearchMsg(result.summary ?? 'Informacoes preenchidas!');
+    } catch (err) {
       setSearchStatus('error');
-      setSearchMsg('Erro ao buscar: ' + String(err));
+      setSearchMsg('Erro: ' + String(err));
     } finally {
       setSearching(false);
     }
   };
 
-  const statusStyle = {
-    found:    { bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.25)',   color: '#4ade80', icon: 'âœ“' },
-    notfound: { bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.25)',  color: '#fbbf24', icon: 'âš ï¸' },
-    error:    { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)',   color: '#f87171', icon: '✕' },
-  };
+  const galleryCount = form.images.filter(i => i.inGallery).length;
+  const heroSelected = form.images.find(i => i.isHero);
 
   return (
-    <StepLayout
-      title="Dados do Produto"
-      subtitle="Informações básicas do empreendimento"
-      currentStep="product"
-      goTo={goTo}
-      onBack={() => goTo('dashboard')}
-      onNext={() => goTo('positioning')}
-      nextDisabled={!form.name.trim() || !form.location.trim()}
-    >
+    <StepLayout title="Dados do Produto" subtitle="Informacoes basicas do empreendimento" currentStep="product" goTo={goTo}
+      onBack={() => goTo('dashboard')} onNext={() => goTo('positioning')} nextDisabled={!form.name.trim() || !form.location.trim()}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* Nome + botÁo busca */}
         <div>
           <label style={labelStyle}>Nome do Empreendimento *</label>
           <div style={{ display: 'flex', gap: 10 }}>
-            <input
-              style={{ ...inputStyle, flex: 1 }}
-              placeholder="Ex: Breeze Inspire Residence"
-              value={form.name}
-              onChange={e => {
-                updateForm({ name: e.target.value });
-                if (searchStatus !== 'idle') { setSearchStatus('idle'); setSearchMsg(''); setFilledFields([]); }
-              }}
-              onKeyDown={e => { if (e.key === 'Enter' && form.name.trim()) handleAutoFill(); }}
-            />
-            <button
-              onClick={handleAutoFill}
-              disabled={searching || !form.name.trim()}
-              style={{
-                padding: '0 20px', height: 46, borderRadius: 10, border: 'none', fontWeight: 700, fontSize: 12,
-                cursor: searching || !form.name.trim() ? 'not-allowed' : 'pointer',
-                background: searching
-                  ? 'rgba(201,168,76,0.25)'
-                  : !form.name.trim()
-                    ? 'rgba(255,255,255,0.05)'
-                    : '#c9a84c',
-                color: searching || !form.name.trim() ? 'rgba(255,255,255,0.25)' : '#0f1923',
-                display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
-                transition: 'all 0.2s', flexShrink: 0,
-              }}
-            >
-              {searching ? (
-                <>
-                  <div style={{ width: 13, height: 13, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'rgba(255,255,255,0.7)', animation: 'lp-spin 0.7s linear infinite' }} />
-                  Buscando...
-                </>
-              ) : <>ðŸ” Buscar informações</>}
+            <input style={{ ...inputStyle, flex: 1 }} placeholder="Ex: Breeze Inspire Residence"
+              value={form.name} onChange={e => { updateForm({ name: e.target.value }); setSearchStatus('idle'); }}
+              onKeyDown={e => e.key === 'Enter' && handleAutoFill()} />
+            <button onClick={handleAutoFill} disabled={searching || !form.name.trim()} style={{
+              padding: '0 20px', height: 46, borderRadius: 10, border: 'none', fontWeight: 700, fontSize: 12,
+              cursor: searching || !form.name.trim() ? 'not-allowed' : 'pointer',
+              background: searching ? 'rgba(201,168,76,0.3)' : !form.name.trim() ? 'rgba(255,255,255,0.05)' : '#c9a84c',
+              color: searching || !form.name.trim() ? 'rgba(255,255,255,0.25)' : '#0f1923',
+              display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', flexShrink: 0,
+            }}>
+              {searching ? <><div style={{ width: 13, height: 13, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite' }} />Buscando...</> : <>&#128269; Buscar</>}
             </button>
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 6 }}>
-            Digite o nome e clique em buscar â€” a IA pesquisa na web e preenche os campos automaticamente
-          </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 6 }}>Digite o nome e clique em buscar</div>
         </div>
 
-        {/* Banner de busca em andamento */}
         {searchStatus === 'searching' && (
-          <div style={{ padding: '14px 18px', borderRadius: 12, background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(201,168,76,0.3)', borderTopColor: '#c9a84c', animation: 'lp-spin 0.7s linear infinite', flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 12, color: '#c9a84c', fontWeight: 600 }}>Pesquisando na web...</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>Buscando localizaçÁo, tipologia, metragem, preços e diferenciais</div>
-            </div>
-          </div>
+          <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', fontSize: 12, color: '#c9a84c' }}>Pesquisando na web...</div>
         )}
-
-        {/* Banner resultado */}
         {(searchStatus === 'found' || searchStatus === 'notfound' || searchStatus === 'error') && (
-          <div style={{
-            padding: '14px 18px', borderRadius: 12,
-            background: statusStyle[searchStatus]?.bg,
-            border: `1px solid ${statusStyle[searchStatus]?.border}`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <span style={{ fontSize: 15, lineHeight: '1.4', flexShrink: 0 }}>{statusStyle[searchStatus]?.icon}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, color: statusStyle[searchStatus]?.color, fontWeight: 600 }}>{searchMsg}</div>
-                {filledFields.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
-                    {filledFields.map(f => (
-                      <span key={f} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>
-                        âœ“ {f}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+          <div style={{ padding: '12px 16px', borderRadius: 10, background: searchStatus === 'found' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${searchStatus === 'found' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`, fontSize: 12, color: searchStatus === 'found' ? '#4ade80' : '#f87171' }}>
+            {searchMsg}
+            {filledFields.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>{filledFields.map(f => <span key={f} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>&#10003; {f}</span>)}</div>}
           </div>
         )}
 
-        {/* Campos */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <Field label="LocalizaçÁo *" placeholder="Ex: Barra da Tijuca, Rio de Janeiro" value={form.location} onChange={v => updateForm({ location: v })} />
-          <Field label="Tipologia" placeholder="Ex: Apartamentos de 2 e 3 quartos" value={form.typology} onChange={v => updateForm({ typology: v })} />
+          <Field label="Localizacao *" placeholder="Ex: Barra da Tijuca, Rio de Janeiro" value={form.location} onChange={v => updateForm({ location: v })} />
+          <Field label="Tipologia" placeholder="Ex: 2 e 3 quartos" value={form.typology} onChange={v => updateForm({ typology: v })} />
         </div>
-
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-          <Field label="Metragem" placeholder="Ex: 65mÂ² a 88mÂ²" value={form.area} onChange={v => updateForm({ area: v })} />
-          <Field label="Vagas" placeholder="Ex: 1 a 2 vagas" value={form.parking} onChange={v => updateForm({ parking: v })} />
-          <Field label="Preço (a partir de)" placeholder="Ex: R$ 800.000" value={form.price} onChange={v => updateForm({ price: v })} />
+          <Field label="Metragem" placeholder="65m2 a 88m2" value={form.area} onChange={v => updateForm({ area: v })} />
+          <Field label="Vagas" placeholder="1 a 2 vagas" value={form.parking} onChange={v => updateForm({ parking: v })} />
+          <Field label="Preco (a partir de)" placeholder="R$ 800.000" value={form.price} onChange={v => updateForm({ price: v })} />
         </div>
-
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <Field label="Entrada (a partir de)" placeholder="Ex: R$ 49.000" value={form.entry} onChange={v => updateForm({ entry: v })} />
-          <Field label="Parcelas (a partir de)" placeholder="Ex: R$ 1.900/mês" value={form.installments} onChange={v => updateForm({ installments: v })} />
+          <Field label="Entrada (a partir de)" placeholder="R$ 49.000" value={form.entry} onChange={v => updateForm({ entry: v })} />
+          <Field label="Parcelas (a partir de)" placeholder="R$ 1.900/mes" value={form.installments} onChange={v => updateForm({ installments: v })} />
+        </div>
+        <Field label="Diferenciais" placeholder="Piscina, academia, varanda gourmet..." value={form.differentials} onChange={v => updateForm({ differentials: v })} textarea />
+
+        <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <label style={labelStyle}>Logo do Empreendimento</label>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => updateForm({ logoType: 'text' })} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${form.logoType === 'text' ? '#c9a84c' : 'rgba(255,255,255,0.1)'}`, background: form.logoType === 'text' ? 'rgba(201,168,76,0.1)' : 'none', color: form.logoType === 'text' ? '#c9a84c' : 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer' }}>Texto (nome)</button>
+            <button onClick={() => updateForm({ logoType: 'image' })} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${form.logoType === 'image' ? '#c9a84c' : 'rgba(255,255,255,0.1)'}`, background: form.logoType === 'image' ? 'rgba(201,168,76,0.1)' : 'none', color: form.logoType === 'image' ? '#c9a84c' : 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer' }}>Upload de logo</button>
+            {form.logoType === 'image' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button onClick={() => logoRef.current?.click()} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 12, cursor: 'pointer' }}>
+                  {form.logoBase64 ? 'Trocar logo' : 'Selecionar logo'}
+                </button>
+                {form.logoBase64 && <img src={form.logoBase64} alt="logo" style={{ height: 36, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)' }} />}
+                <input ref={logoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogo} />
+              </div>
+            )}
+          </div>
         </div>
 
-        <Field
-          label="Diferenciais"
-          placeholder="Ex: Piscina com vista para o mar, academia completa, coworking, pet place..."
-          value={form.differentials}
-          onChange={v => updateForm({ differentials: v })}
-          textarea
-        />
-
-        {/* Preview pontos fortes preenchidos */}
-        {form.strongPoints.length > 0 && (
-          <div style={{ padding: '14px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              Pontos fortes identificados â€” editáveis na etapa 4
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-              {form.strongPoints.map(pt => (
-                <span key={pt} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 99, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
-                  {pt}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Config técnica */}
         <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ ...labelStyle, marginBottom: 14 }}>ConfiguraçÁo Técnica</div>
+          <label style={{ ...labelStyle, marginBottom: 14 }}>Configuracao Tecnica</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
             <Field label="WhatsApp" placeholder="5521990975268" value={form.whatsapp} onChange={v => updateForm({ whatsapp: v })} />
             <Field label="Meta Pixel ID" placeholder="952987786056843" value={form.pixelId} onChange={v => updateForm({ pixelId: v })} />
-            <Field label="E-mail Formulário" placeholder="seu@email.com" value={form.formEmail} onChange={v => updateForm({ formEmail: v })} />
+            <Field label="E-mail Formulario" placeholder="seu@email.com" value={form.formEmail} onChange={v => updateForm({ formEmail: v })} />
           </div>
         </div>
 
-        {/* Upload imagens */}
-        <div>
+        <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <label style={labelStyle}>Imagens do Empreendimento</label>
-          <div
-            onClick={() => fileRef.current?.click()}
-            style={{ border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 12, padding: '24px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s' }}
+          <div onClick={() => fileRef.current?.click()} style={{ border: '2px dashed rgba(255,255,255,0.1)', borderRadius: 12, padding: '20px', textAlign: 'center', cursor: 'pointer' }}
             onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.4)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
-          >
-            <div style={{ fontSize: 28, marginBottom: 8 }}>ðŸ“¸</div>
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}>
+            <div style={{ fontSize: 24, marginBottom: 6 }}>&#128247;</div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Clique para fazer upload das imagens</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>Fachada, lazer, planta, área interna...</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 3 }}>Fachada, lazer, planta, area interna...</div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImages} />
 
           {form.images.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginTop: 12 }}>
-              {form.images.map(img => (
-                <div key={img.id} style={{ position: 'relative' }}>
-                  <img src={img.base64} alt={img.label} style={{ width: '100%', height: 72, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }} />
-                  <input
-                    style={{ ...inputStyle, marginTop: 4, padding: '5px 8px', fontSize: 10, borderRadius: 6 }}
-                    value={img.label}
-                    onChange={e => updateForm({ images: form.images.map(i => i.id === img.id ? { ...i, label: e.target.value } : i) })}
-                    placeholder="Legenda"
-                  />
-                  <button
-                    onClick={() => updateForm({ images: form.images.filter(i => i.id !== img.id) })}
-                    style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: '#ef4444', border: 'none', color: '#fff', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >✕</button>
+            <div style={{ marginTop: 14 }}>
+              <div style={{ display: 'flex', gap: 16, marginBottom: 12, fontSize: 11, color: 'rgba(255,255,255,0.35)', flexWrap: 'wrap' }}>
+                <span>&#11088; Hero = imagem do topo da LP</span>
+                <span>&#128247; Galeria = ate 3 fotos ({galleryCount}/3)</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+                {form.images.map(img => (
+                  <div key={img.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', border: `2px solid ${img.isHero ? '#c9a84c' : img.inGallery ? '#4ade80' : 'rgba(255,255,255,0.1)'}` }}>
+                    <img src={img.base64} alt={img.label} style={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }} />
+                    {img.isHero && <div style={{ position: 'absolute', top: 4, left: 4, background: '#c9a84c', color: '#0f1923', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>HERO</div>}
+                    {img.inGallery && <div style={{ position: 'absolute', top: 4, left: img.isHero ? 46 : 4, background: '#4ade80', color: '#0f1923', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>GALERIA</div>}
+                    <div style={{ display: 'flex', gap: 4, padding: '6px', background: 'rgba(0,0,0,0.7)' }}>
+                      <button onClick={() => toggleHero(img.id)} style={{ flex: 1, padding: '4px', borderRadius: 4, border: 'none', background: img.isHero ? '#c9a84c' : 'rgba(255,255,255,0.1)', color: img.isHero ? '#0f1923' : '#fff', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Hero</button>
+                      <button onClick={() => toggleGallery(img.id)} disabled={!img.inGallery && galleryCount >= 3} style={{ flex: 1, padding: '4px', borderRadius: 4, border: 'none', background: img.inGallery ? '#4ade80' : 'rgba(255,255,255,0.1)', color: img.inGallery ? '#0f1923' : '#fff', fontSize: 11, cursor: !img.inGallery && galleryCount >= 3 ? 'not-allowed' : 'pointer', fontWeight: 600 }}>Gal.</button>
+                      <button onClick={() => removeImage(img.id)} style={{ padding: '4px 6px', borderRadius: 4, border: 'none', background: 'rgba(239,68,68,0.3)', color: '#f87171', fontSize: 11, cursor: 'pointer' }}>&#10005;</button>
+                    </div>
+                    <input style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '5px 8px', color: '#fff', fontSize: 10, outline: 'none' }}
+                      value={img.label} onChange={e => updateForm({ images: form.images.map(i => i.id === img.id ? { ...i, label: e.target.value } : i) })} placeholder="Legenda" />
+                  </div>
+                ))}
+              </div>
+              {!heroSelected && form.images.length > 0 && (
+                <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, fontSize: 11, color: '#fbbf24' }}>
+                  &#9888; Selecione uma imagem como Hero
                 </div>
-              ))}
+              )}
+              {galleryCount === 0 && form.images.length > 0 && (
+                <div style={{ marginTop: 6, padding: '8px 12px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 8, fontSize: 11, color: '#fbbf24' }}>
+                  &#9888; Selecione ate 3 imagens para a galeria
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
-
-      <style>{`@keyframes lp-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </StepLayout>
   );
 }
-
-
-
-
