@@ -7,26 +7,12 @@ interface GenerateOptions {
   overrideType?: FormData['lpType'];
 }
 
-export function getApiKey(): string {
-  return localStorage.getItem('anthropic_api_key') ?? '';
-}
-
-export function setApiKey(key: string) {
-  localStorage.setItem('anthropic_api_key', key);
-}
-
-export function getGithubToken(): string {
-  return localStorage.getItem('github_token') ?? '';
-}
-export function setGithubToken(key: string) {
-  localStorage.setItem('github_token', key);
-}
-export function getVercelToken(): string {
-  return localStorage.getItem('vercel_token') ?? '';
-}
-export function setVercelToken(key: string) {
-  localStorage.setItem('vercel_token', key);
-}
+export function getApiKey(): string { return localStorage.getItem('anthropic_api_key') ?? ''; }
+export function setApiKey(key: string) { localStorage.setItem('anthropic_api_key', key); }
+export function getGithubToken(): string { return localStorage.getItem('github_token') ?? ''; }
+export function setGithubToken(key: string) { localStorage.setItem('github_token', key); }
+export function getVercelToken(): string { return localStorage.getItem('vercel_token') ?? ''; }
+export function setVercelToken(key: string) { localStorage.setItem('vercel_token', key); }
 
 function toSlug(name: string): string {
   return name.toLowerCase()
@@ -35,6 +21,28 @@ function toSlug(name: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .trim();
+}
+
+// Preposicao correta para localizacao (de/da/do)
+function prepLoc(location: string): string {
+  const l = location.trim().toLowerCase();
+  const vowels = ['a','e','i','o','u'];
+  // Regioes femininas conhecidas
+  const fem = ['barra','zona sul','zona norte','zona oeste','tijuca','lagoa','copacabana','ipanema','recreio','glória','lapa'];
+  if (fem.some(f => l.includes(f))) return 'da';
+  if (vowels.includes(l[0])) return 'de';
+  return 'do';
+}
+
+// Texto do card financiamento por tipo/agressividade
+function finCard(lpType: string, agg: string): string {
+  if (lpType === 'investimento') return 'Alavancagem inteligente';
+  if (lpType === 'moradia') {
+    if (agg === 'baixo') return 'Facilitado';
+    if (agg === 'medio') return 'Que cabe no seu bolso';
+    return 'Condicoes especiais de lancamento';
+  }
+  return 'Condicoes especiais';
 }
 
 async function generateCopy(form: FormData, opts: GenerateOptions, apiKey: string) {
@@ -46,61 +54,28 @@ async function generateCopy(form: FormData, opts: GenerateOptions, apiKey: strin
     investimento: 'racional, direto, estrategico. Foco em oportunidade, valorizacao, retorno, timing, escassez. EVITAR linguagem emocional familiar.',
     neutra: 'equilibrado entre emocao e logica. Unir moradia e investimento. Tom comercial e pratico.',
   };
-
   const audienceMap: Record<string, string> = {
     moradia: 'familias e primeiros compradores. Simplificar linguagem, reforcar seguranca e praticidade.',
     investidor: 'investidores. Incluir logica de ganho, usar: valorizacao, oportunidade, timing, retorno.',
     misto: 'publico misto. Equilibrar sem aprofundar demais em nenhum lado.',
   };
-
   const triggerMap: Record<string, string> = {
     preco: 'PRECO — destacar acessibilidade, usar "a partir de", condicoes facilitadas.',
     localizacao: 'LOCALIZACAO — destacar a regiao, proximidades, valorizacao da area.',
     vista: 'VISTA — explorar emocao, exclusividade, raridade da vista.',
     condicao: 'CONDICAO — destacar entrada e parcelas, foco em facilidade de pagamento.',
   };
-
   const aggressMap: Record<string, string> = {
     baixo: 'Tom institucional e elegante. SEM urgencia ou escassez. Mais sofisticado.',
     medio: 'Tom persuasivo com leve escassez. Moderadamente comercial.',
     alto: 'Tom agressivo: urgencia clara, escassez forte, chamadas diretas. Exemplos: "ultimas unidades", "condicao por tempo limitado".',
   };
-
-  const ctaMap: Record<string, string> = {
-    moradia: 'Quero conhecer o meu apartamento',
-    investimento: 'Quero receber a analise agora',
-    neutra: 'Receber tabela e condicoes',
-  };
-
-  const formTitleMap: Record<string, string> = {
-    moradia: 'Seu proximo lar esta aqui',
-    investimento: 'Essa oportunidade nao vai esperar',
-    neutra: 'Garanta sua oportunidade',
-  };
-
-  const formSubMap: Record<string, string> = {
-    moradia: 'Preencha agora e receba condicoes exclusivas antes do lancamento oficial',
-    investimento: 'Receba a analise completa de rentabilidade e as condicoes do lancamento',
-    neutra: 'Receba a tabela de precos e condicoes especiais agora',
-  };
-
-  const formMicroMap: Record<string, string> = {
-    moradia: 'Atendimento personalizado — sem pressao, sem enrolacao',
-    investimento: 'Vagas limitadas para atendimento prioritario',
-    neutra: 'Condicoes especiais de lancamento — por tempo limitado',
-  };
-
-  const whatsappTriggerMap: Record<string, string> = {
-    moradia: 'Quer saber se esse apartamento e para voce?',
-    investimento: 'Qual o retorno real desse imovel?',
-    neutra: 'Ficou com duvida? A gente resolve em 2 minutos',
-  };
-
-  const whatsappCtaMap: Record<string, string> = {
-    moradia: 'Falar com um especialista agora',
-    investimento: 'Quero a analise completa',
-    neutra: 'Falar no WhatsApp',
-  };
+  const ctaMap: Record<string, string> = { moradia: 'Quero conhecer o meu apartamento', investimento: 'Quero receber a analise agora', neutra: 'Receber tabela e condicoes' };
+  const formTitleMap: Record<string, string> = { moradia: 'Seu proximo lar esta aqui', investimento: 'Essa oportunidade nao vai esperar', neutra: 'Garanta sua oportunidade' };
+  const formSubMap: Record<string, string> = { moradia: 'Preencha agora e receba condicoes exclusivas antes do lancamento oficial', investimento: 'Receba a analise completa de rentabilidade e as condicoes do lancamento', neutra: 'Receba a tabela de precos e condicoes especiais agora' };
+  const formMicroMap: Record<string, string> = { moradia: 'Atendimento personalizado — sem pressao, sem enrolacao', investimento: 'Vagas limitadas para atendimento prioritario', neutra: 'Condicoes especiais de lancamento — por tempo limitado' };
+  const whatsappTriggerMap: Record<string, string> = { moradia: 'Quer saber se esse apartamento e para voce?', investimento: 'Qual o retorno real desse imovel?', neutra: 'Ficou com duvida? A gente resolve em 2 minutos' };
+  const whatsappCtaMap: Record<string, string> = { moradia: 'Falar com um especialista agora', investimento: 'Quero a analise completa', neutra: 'Falar no WhatsApp' };
 
   const prompt = `Voce e copywriter senior especialista em imoveis de alto padrao no Brasil.
 Gere copy de alta conversao para esta landing page imobiliaria.
@@ -118,10 +93,11 @@ ${form.description ? `Descricao existente (use como base): ${form.description}` 
 
 REGRAS CRITICAS:
 - NUNCA inventar numeros, unidades ou dados
-- NUNCA usar asteriscos (*texto*) — italico via HTML ja sera aplicado
+- NUNCA usar asteriscos (*texto*)
 - Usar APENAS dados informados acima
 - Headlines devem ser diferentes entre versao A e B
 - Headline versao ${opts.headlineVariant === 'B' ? 'B: criativa, inesperada, diferente da convencional' : 'A: direta, clara, focada no principal gatilho'}
+- Os 4 diferenciais (diff1 a diff4) DEVEM abordar temas COMPLETAMENTE DIFERENTES entre si. Escolha 4 temas distintos dentre: localizacao, lazer, tipologia, seguranca, construtora, vista, condicao, sustentabilidade, comunidade, tecnologia. PROIBIDO repetir o mesmo tema.
 
 Retorne exatamente este JSON:
 {
@@ -135,14 +111,14 @@ Retorne exatamente este JSON:
   "benefit3title": "titulo beneficio 3 baseado em: ${sp[2] ?? 'Vista privilegiada'}",
   "benefit3desc": "descricao curta",
   "descricaoBloco": "${form.description || `paragrafo de 2-3 linhas sobre o empreendimento com tom ${lpType}`}",
-  "diff1title": "diferencial 1 baseado nos dados",
-  "diff1desc": "descricao 1 frase",
-  "diff2title": "diferencial 2",
-  "diff2desc": "descricao",
-  "diff3title": "diferencial 3",
-  "diff3desc": "descricao",
-  "diff4title": "diferencial 4",
-  "diff4desc": "descricao",
+  "diff1title": "diferencial 1 — tema: LOCALIZACAO",
+  "diff1desc": "descricao 1 frase comercial e direta",
+  "diff2title": "diferencial 2 — tema: LAZER ou ESTRUTURA",
+  "diff2desc": "descricao comercial",
+  "diff3title": "diferencial 3 — tema: TIPOLOGIA ou PLANTA",
+  "diff3desc": "descricao comercial",
+  "diff4title": "diferencial 4 — tema: SEGURANCA ou CONSTRUTORA ou SUSTENTABILIDADE",
+  "diff4desc": "descricao comercial",
   "whatsappTrigger": "${whatsappTriggerMap[lpType]}",
   "whatsappCta": "${whatsappCtaMap[lpType]}",
   "escassez": "frase de escassez baseada APENAS nos dados reais informados",
@@ -157,7 +133,6 @@ Retorne exatamente este JSON:
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
     body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] }),
   });
-
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const data = await response.json() as { content?: { text?: string }[] };
   const text = data.content?.[0]?.text ?? '';
@@ -169,6 +144,8 @@ Retorne exatamente este JSON:
 function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy: Record<string, string>): string {
   const pc = form.primaryColor || '#1a3a5c';
   const sc = form.secondaryColor || '#c9a84c';
+  const lpType = form.lpType;
+  const agg = form.aggressiveness;
   const heroImg = form.images.find(i => i.isHero);
   const galleryImgs = form.images.filter(i => i.inGallery).slice(0, 3);
   const formBgImg = galleryImgs[0] ?? heroImg;
@@ -193,11 +170,12 @@ function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy
        <figure class="gal-item"><div class="gal-ph" style="background:linear-gradient(135deg,${pc}33,${pc}66)"></div><figcaption>Localizacao privilegiada</figcaption></figure>
        <figure class="gal-item"><div class="gal-ph" style="background:linear-gradient(135deg,${pc}55,${pc}99)"></div><figcaption>Ambientes modernos</figcaption></figure>`;
 
+  const finText = finCard(lpType, agg);
   const condCards = (() => {
     const cards = [];
     if (form.entry) cards.push(`<div class="cond-card"><div class="cc-lbl">Entrada</div><div class="cc-sub">a partir de</div><div class="cc-val">${form.entry}</div></div>`);
     if (form.installments) cards.push(`<div class="cond-card"><div class="cc-lbl">Parcelas</div><div class="cc-val">${form.installments}</div><div class="cc-sub">Durante a Obra</div></div>`);
-    cards.push(`<div class="cond-card"><div class="cc-lbl">Financiamento</div><div class="cc-val" style="font-size:clamp(16px,2vw,20px)">facilitado</div><div class="cc-sub">Caixa Economica</div></div>`);
+    cards.push(`<div class="cond-card"><div class="cc-lbl">Financiamento</div><div class="cc-val" style="font-size:clamp(13px,1.8vw,17px)">${finText}</div><div class="cc-sub">Caixa Economica</div></div>`);
     return cards.join('');
   })();
 
@@ -206,6 +184,7 @@ function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy
   const svgPin = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
   const svgDiamond = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.7 10.3a2.41 2.41 0 000 3.41l7.59 7.59a2.41 2.41 0 003.41 0l7.59-7.59a2.41 2.41 0 000-3.41l-7.59-7.59a2.41 2.41 0 00-3.41 0z"/></svg>`;
   const svgWa = `<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>`;
+  const prep = prepLoc(form.location);
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -241,7 +220,7 @@ function buildTemplateDefault(form: FormData, opts: { showPrice: boolean }, copy
 .ben-text span{font-size:11px;color:#666;}
 .ben-sep{width:1px;height:52px;background:#e8e8e8;flex-shrink:0;}
 .desc-block{background:#fff;padding:40px 20px 0;}
-.desc-inner{max-width:720px;margin:0 auto;font-size:15px;color:#444;line-height:1.8;font-family:'Playfair Display',serif;font-style:italic;border-left:3px solid ${sc};padding-left:20px;}
+.desc-inner{max-width:720px;margin:0 auto;text-align:center;font-size:15px;color:#444;line-height:1.8;font-family:'Playfair Display',serif;font-style:italic;border-left:3px solid ${sc};padding-left:20px;}
 .gallery{background:#f0f4f8;padding:56px 20px;}
 .sec-title{font-family:'Playfair Display',serif;font-size:clamp(20px,3.5vw,30px);color:${pc};text-align:center;margin-bottom:10px;}
 .sec-div{display:flex;align-items:center;gap:14px;max-width:280px;margin:0 auto 34px;}
@@ -294,9 +273,9 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
   .ben-sep{display:none;}.ben-grid{flex-direction:column;align-items:flex-start;}
   .gal-grid{grid-template-columns:1fr;}.feat-grid{grid-template-columns:1fr;}
   .cond-grid{grid-template-columns:1fr;}
-  .hero-content{padding:120px 16px 80px;}
-  .hero-logo{top:60px;left:50%;transform:translateX(-50%);}
-  .hero-wa-top{display:block;position:fixed;top:0;left:0;right:0;z-index:9999;background:#25D366;color:#fff;font-weight:600;font-size:12px;padding:8px 16px;text-align:center;text-decoration:none;line-height:1;}
+  .hero-content{padding:130px 16px 64px;}
+  .hero-logo{top:48px;left:50%;transform:translateX(-50%) scale(1.3);transform-origin:top center;}
+  .hero-wa-top{display:block;position:fixed;top:0;left:0;right:0;z-index:9999;background:#25D366;color:#fff;font-weight:600;font-size:13px;padding:9px 16px;text-align:center;text-decoration:none;line-height:1.2;}
   .hero-wa-top svg{display:none;}
   .gallery,.features,.conditions{padding:40px 16px;}
   .form-sec{padding:48px 16px;}.form-box{padding:18px 14px;}
@@ -314,7 +293,7 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
     <span class="hero-arrow">&#8595;</span>
     <a href="#formulario" class="btn-cta">${copy.ctaText}</a>
   </div>
-  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="hero-wa-top" target="_blank">${svgWa} ${copy.whatsappCta}</a>
+  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="hero-wa-top" target="_blank">${copy.whatsappCta}</a>
 </section>
 <section class="benefits fade-in">
   <div class="ben-grid">
@@ -327,7 +306,7 @@ footer{background:#060d1a;padding:16px 20px;text-align:center;color:rgba(255,255
 </section>
 <section class="desc-block fade-in"><div class="desc-inner">${copy.descricaoBloco}</div></section>
 <section class="gallery fade-in">
-  <h2 class="sec-title">Viva o melhor de ${form.location}</h2>
+  <h2 class="sec-title">Viva o melhor ${prep} ${form.location}</h2>
   <div class="sec-div"></div>
   <div class="gal-grid">${galleryHtml}</div>
 </section>
@@ -390,6 +369,8 @@ document.querySelector('.btn-cta').addEventListener('click',function(e){e.preven
 
 function buildTemplateInvestor(form: FormData, opts: { showPrice: boolean }, copy: Record<string, string>): string {
   const sc = '#c9a84c';
+  const lpType = form.lpType;
+  const agg = form.aggressiveness;
   const heroImg = form.images.find(i => i.isHero);
   const galleryImgs = form.images.filter(i => i.inGallery).slice(0, 3);
   const formBgImg = galleryImgs[0] ?? heroImg;
@@ -429,11 +410,12 @@ function buildTemplateInvestor(form: FormData, opts: { showPrice: boolean }, cop
     form.strongPoints[2] ? `<div class="spec-item"><div class="spec-dot"></div><span>${form.strongPoints[2]}</span></div>` : '',
   ].filter(Boolean).join('');
 
+  const finText = finCard(lpType, agg);
   const condCards = (() => {
     const cards = [];
     if (form.entry) cards.push(`<div class="cond-card"><div class="cc-lbl">Entrada</div><div class="cc-sub">a partir de</div><div class="cc-val">${form.entry}</div></div>`);
     if (form.installments) cards.push(`<div class="cond-card"><div class="cc-lbl">Parcelas</div><div class="cc-val">${form.installments}</div><div class="cc-sub">Durante a Obra</div></div>`);
-    cards.push(`<div class="cond-card"><div class="cc-lbl">Financiamento</div><div class="cc-val" style="font-size:clamp(14px,2vw,18px)">facilitado</div><div class="cc-sub">Caixa FGTS</div></div>`);
+    cards.push(`<div class="cond-card"><div class="cc-lbl">Financiamento</div><div class="cc-val" style="font-size:clamp(13px,1.8vw,17px)">${finText}</div><div class="cc-sub">Caixa FGTS</div></div>`);
     return cards.join('');
   })();
 
@@ -535,9 +517,9 @@ footer{background:#030810;padding:14px 20px;text-align:center;color:rgba(255,255
 @media(max-width:768px){
   .rent-grid,.why-grid,.cond-grid,.gal-grid,.specs-grid{grid-template-columns:1fr;}
   .simul-chart{display:none;}
-  .hero-content{padding:120px 16px 80px;}
-  .hero-logo{top:60px;left:50%;transform:translateX(-50%);}
-  .hero-wa-top{display:block;position:fixed;top:0;left:0;right:0;z-index:9999;background:#25D366;color:#fff;font-weight:600;font-size:12px;padding:8px 16px;text-align:center;text-decoration:none;line-height:1;}
+  .hero-content{padding:130px 16px 64px;}
+  .hero-logo{top:48px;left:50%;transform:translateX(-50%) scale(1.3);transform-origin:top center;}
+  .hero-wa-top{display:block;position:fixed;top:0;left:0;right:0;z-index:9999;background:#25D366;color:#fff;font-weight:600;font-size:13px;padding:9px 16px;text-align:center;text-decoration:none;line-height:1.2;}
   .hero-wa-top svg{display:none;}
   .rent-sec,.empreend,.simul,.why,.cond-sec{padding:32px 16px;}
   .form-sec{padding:40px 16px;}.form-box{padding:16px 12px;}
@@ -556,7 +538,7 @@ footer{background:#030810;padding:14px 20px;text-align:center;color:rgba(255,255
     <span class="hero-arrow">&#8595;</span>
     <a href="#formulario" class="btn-cta">${copy.ctaText}</a>
   </div>
-  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="hero-wa-top" target="_blank">${svgWa} ${copy.whatsappCta}</a>
+  <a href="https://wa.me/${form.whatsapp}?text=${encodeURIComponent(copy.whatsappCta + ' - ' + form.name)}" class="hero-wa-top" target="_blank">${copy.whatsappCta}</a>
 </section>
 <section class="rent-sec fade-in">
   <h2 class="sec-title">Potencial de Retorno</h2>
@@ -661,9 +643,7 @@ export async function generateLP(form: FormData, opts: GenerateOptions): Promise
   if (!apiKey) throw new Error('API key nao configurada.');
   const lpType = opts.overrideType ?? form.lpType;
   const copy = await generateCopy({ ...form, lpType }, opts, apiKey);
-  if (lpType === 'investimento') {
-    return buildTemplateInvestor(form, { showPrice: opts.showPrice }, copy);
-  }
+  if (lpType === 'investimento') return buildTemplateInvestor(form, { showPrice: opts.showPrice }, copy);
   return buildTemplateDefault(form, { showPrice: opts.showPrice }, copy);
 }
 
@@ -672,59 +652,28 @@ export async function publishLP(name: string, html: string): Promise<string> {
   const vercelToken = getVercelToken();
   if (!githubToken) throw new Error('Token do GitHub nao configurado.');
   if (!vercelToken) throw new Error('Token do Vercel nao configurado.');
-
   const slug = toSlug(name);
   const repoOwner = 'exclusivacomerciorj-cloud';
   const repoName = 'exclusiva-lps';
   const filePath = `${slug}/index.html`;
   const content = btoa(unescape(encodeURIComponent(html)));
-
   let sha = '';
   try {
-    const fileRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
-      headers: { 'Authorization': `token ${githubToken}` },
-    });
-    if (fileRes.ok) {
-      const fileData = await fileRes.json() as { sha: string };
-      sha = fileData.sha;
-    }
+    const fileRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, { headers: { 'Authorization': `token ${githubToken}` } });
+    if (fileRes.ok) { const fileData = await fileRes.json() as { sha: string }; sha = fileData.sha; }
   } catch { /* arquivo nao existe ainda */ }
-
   const commitRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
     method: 'PUT',
     headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message: `deploy: ${name}`,
-      content,
-      ...(sha ? { sha } : {}),
-    }),
+    body: JSON.stringify({ message: `deploy: ${name}`, content, ...(sha ? { sha } : {}) }),
   });
-
-  if (!commitRes.ok) {
-    const err = await commitRes.json() as { message?: string };
-    throw new Error(err.message ?? 'Erro ao fazer commit no GitHub');
-  }
-
+  if (!commitRes.ok) { const err = await commitRes.json() as { message?: string }; throw new Error(err.message ?? 'Erro ao fazer commit no GitHub'); }
   const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${vercelToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: repoName,
-      gitSource: {
-        type: 'github',
-        org: repoOwner,
-        repo: repoName,
-        ref: 'main',
-      },
-      projectSettings: { framework: null },
-    }),
+    body: JSON.stringify({ name: repoName, gitSource: { type: 'github', org: repoOwner, repo: repoName, ref: 'main' }, projectSettings: { framework: null } }),
   });
-
-  if (!deployRes.ok) {
-    const err = await deployRes.json() as { error?: { message?: string } };
-    throw new Error(err.error?.message ?? 'Erro no deploy Vercel');
-  }
-
+  if (!deployRes.ok) { const err = await deployRes.json() as { error?: { message?: string } }; throw new Error(err.error?.message ?? 'Erro no deploy Vercel'); }
   const deployData = await deployRes.json() as { url: string };
   return `https://${deployData.url}/${slug}`;
 }
