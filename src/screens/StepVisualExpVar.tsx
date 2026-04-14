@@ -12,7 +12,7 @@ function CheckOpt({ checked, onChange, label, desc }: { checked: boolean; onChan
       cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
     }}>
       <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${checked ? '#c9a84c' : 'rgba(255,255,255,0.2)'}`, background: checked ? '#c9a84c' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-        {checked && <span style={{ color: '#0f1923', fontSize: 11, fontWeight: 800 }}>âœ“</span>}
+        {checked && <span style={{ color: '#0f1923', fontSize: 11, fontWeight: 800 }}>✓</span>}
       </div>
       <div>
         <div style={{ fontSize: 13, fontWeight: 600, color: checked ? '#fff' : 'rgba(255,255,255,0.5)' }}>{label}</div>
@@ -22,7 +22,7 @@ function CheckOpt({ checked, onChange, label, desc }: { checked: boolean; onChan
   );
 }
 
-// â”€â”€â”€ VISUAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// VISUAL
 export function StepVisual({ form, updateForm, goTo }: Props) {
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 };
   const inputStyle: React.CSSProperties = { flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 16px', color: '#fff', fontSize: 13, outline: 'none', fontFamily: 'monospace' };
@@ -34,7 +34,7 @@ export function StepVisual({ form, updateForm, goTo }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {[
             { label: 'Cor Principal', key: 'primaryColor', value: form.primaryColor },
-            { label: 'Cor SecundÃ¡ria / CTA', key: 'secondaryColor', value: form.secondaryColor },
+            { label: 'Cor Secundaria / CTA', key: 'secondaryColor', value: form.secondaryColor },
           ].map(c => (
             <div key={c.key}>
               <label style={labelStyle}>{c.label}</label>
@@ -51,9 +51,9 @@ export function StepVisual({ form, updateForm, goTo }: Props) {
         <div style={{ borderRadius: 14, padding: 24, background: `linear-gradient(135deg, ${form.primaryColor}33, ${form.primaryColor}66)`, border: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Preview</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6 }}>{form.name || 'Nome do Empreendimento'}</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>{form.location || 'LocalizaÃ§Ã£o'}</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>{form.location || 'Localizacao'}</div>
           <button style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: form.secondaryColor, color: '#0f1923', fontWeight: 700, fontSize: 13, cursor: 'default' }}>
-            Receber tabela e condiÃ§Ãµes â†’
+            Receber tabela e condicoes
           </button>
         </div>
 
@@ -62,9 +62,9 @@ export function StepVisual({ form, updateForm, goTo }: Props) {
           <label style={labelStyle}>Estilo Visual</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             {[
-              { value: 'clean', label: 'âœ¦ Clean', desc: 'Minimalista, muito espaÃ§o, tipografia forte' },
-              { value: 'sofisticado', label: 'â—ˆ Sofisticado', desc: 'Premium, elegante, gradientes sutis' },
-              { value: 'moderno', label: 'â—‰ Moderno', desc: 'DinÃ¢mico, bold, elementos grÃ¡ficos' },
+              { value: 'clean', label: 'Clean', desc: 'Minimalista, muito espaco, tipografia forte' },
+              { value: 'sofisticado', label: 'Sofisticado', desc: 'Premium, elegante, gradientes sutis' },
+              { value: 'moderno', label: 'Moderno', desc: 'Dinamico, bold, elementos graficos' },
             ].map(opt => (
               <button key={opt.value} onClick={() => updateForm({ style: opt.value as FormData['style'] })} style={{
                 padding: '16px', borderRadius: 12, border: `1px solid ${form.style === opt.value ? '#c9a84c' : 'rgba(255,255,255,0.08)'}`,
@@ -82,27 +82,27 @@ export function StepVisual({ form, updateForm, goTo }: Props) {
   );
 }
 
-// â”€â”€â”€ EXPERIENCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// EXPERIENCE
 export function StepExperience({ form, updateForm, goTo }: Props) {
   const inputStyle: React.CSSProperties = { width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 16px', color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box' };
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 };
 
   return (
-    <StepLayout title="ExperiÃªncia & UX" subtitle="Interatividade e elementos da LP" currentStep="experience" goTo={goTo}
+    <StepLayout title="Experiencia e UX" subtitle="Interatividade e elementos da LP" currentStep="experience" goTo={goTo}
       onBack={() => goTo('visual')} onNext={() => goTo('variations')}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <CheckOpt checked={form.animations} onChange={v => updateForm({ animations: v })} label="Ativar animaÃ§Ãµes" desc="Fade-in nos elementos durante o scroll, hover nos botÃµes" />
-        <CheckOpt checked={form.arrows} onChange={v => updateForm({ arrows: v })} label="Usar setas direcionais" desc="Setas que guiam o olhar do usuÃ¡rio para os CTAs" />
-        <CheckOpt checked={form.hasVideo} onChange={v => updateForm({ hasVideo: v })} label="Incluir vÃ­deo" desc="Embed YouTube/Vimeo â€” mantÃ©m a LP leve e rÃ¡pida" />
+        <CheckOpt checked={form.animations} onChange={v => updateForm({ animations: v })} label="Ativar animacoes" desc="Fade-in nos elementos durante o scroll, hover nos botoes" />
+        <CheckOpt checked={form.arrows} onChange={v => updateForm({ arrows: v })} label="Usar setas direcionais" desc="Setas que guiam o olhar do usuario para os CTAs" />
+        <CheckOpt checked={form.hasVideo} onChange={v => updateForm({ hasVideo: v })} label="Incluir video" desc="Embed YouTube/Vimeo — mantem a LP leve e rapida" />
 
         {form.hasVideo && (
           <div style={{ marginLeft: 16, padding: 20, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={labelStyle}>URL do VÃ­deo (YouTube ou Vimeo)</label>
+              <label style={labelStyle}>URL do Video (YouTube ou Vimeo)</label>
               <input style={inputStyle} placeholder="https://www.youtube.com/watch?v=..." value={form.videoUrl} onChange={e => updateForm({ videoUrl: e.target.value })} />
             </div>
             <div>
-              <label style={labelStyle}>Tipo de VÃ­deo</label>
+              <label style={labelStyle}>Tipo de Video</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {['drone', 'institucional', 'lifestyle'].map(t => (
                   <button key={t} onClick={() => updateForm({ videoType: t as FormData['videoType'] })} style={{
@@ -120,22 +120,23 @@ export function StepExperience({ form, updateForm, goTo }: Props) {
   );
 }
 
-// â”€â”€â”€ VARIATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// VARIATIONS
 export function StepVariations({ form, updateForm, goTo }: Props) {
+  const selected = [form.withPrice, form.withoutPrice, form.investorVersion, form.housingVersion, form.headlineVariation].filter(Boolean).length;
+
   return (
-    <StepLayout title="VariaÃ§Ãµes EstratÃ©gicas" subtitle="Multiplique seus resultados com mÃºltiplas versÃµes da LP" currentStep="variations" goTo={goTo}
-      onBack={() => goTo('experience')} onNext={() => goTo('generate')} nextLabel="Gerar LPs â†’">
+    <StepLayout title="Variacoes Estrategicas" subtitle="Multiplique seus resultados com multiplas versoes da LP" currentStep="variations" goTo={goTo}
+      onBack={() => goTo('experience')} onNext={() => goTo('generate')} nextLabel={`Gerar ${Math.max(1, selected)} LP${selected > 1 ? 's' : ''} →`}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12, padding: '14px 18px', fontSize: 12, color: '#c9a84c', marginBottom: 6 }}>
-          ðŸ’¡ Cada variaÃ§Ã£o gera uma LP independente. Mais versÃµes = mais dados = menor CPL no Google Ads.
+          Cada variacao gera uma LP independente. Mais versoes = mais dados = menor CPL no Google Ads.
         </div>
-        <CheckOpt checked={form.withPrice} onChange={v => updateForm({ withPrice: v })} label="LP com preÃ§o" desc="VersÃ£o padrÃ£o exibindo o valor â€” atrai leads mais qualificados" />
-        <CheckOpt checked={form.withoutPrice} onChange={v => updateForm({ withoutPrice: v })} label="LP sem preÃ§o" desc="Esconde o preÃ§o â€” maior volume de leads para qualificar no atendimento" />
-        <CheckOpt checked={form.investorVersion} onChange={v => updateForm({ investorVersion: v })} label="VersÃ£o Investidor" desc="Copy focada em retorno, valorizaÃ§Ã£o e oportunidade de mercado" />
-        <CheckOpt checked={form.housingVersion} onChange={v => updateForm({ housingVersion: v })} label="VersÃ£o Moradia" desc="Copy focada em qualidade de vida, famÃ­lia e bem-estar" />
-        <CheckOpt checked={form.headlineVariation} onChange={v => updateForm({ headlineVariation: v })} label="VariaÃ§Ã£o de headline (A/B)" desc="Gera 2 versÃµes do topo com headlines diferentes para teste" />
+        <CheckOpt checked={form.withPrice} onChange={v => updateForm({ withPrice: v })} label="LP com preco" desc="Versao padrao exibindo o valor — atrai leads mais qualificados" />
+        <CheckOpt checked={form.withoutPrice} onChange={v => updateForm({ withoutPrice: v })} label="LP sem preco" desc="Esconde o preco — maior volume de leads para qualificar no atendimento" />
+        <CheckOpt checked={form.investorVersion} onChange={v => updateForm({ investorVersion: v })} label="Versao Investidor" desc="Template escuro, copy racional, blocos de rentabilidade e simulacao" />
+        <CheckOpt checked={form.housingVersion} onChange={v => updateForm({ housingVersion: v })} label="Versao Moradia" desc="Copy focada em qualidade de vida, familia e bem-estar" />
+        <CheckOpt checked={form.headlineVariation} onChange={v => updateForm({ headlineVariation: v })} label="Variacao de headline A/B" desc="Gera 2 versoes do topo com headlines diferentes para teste" />
       </div>
     </StepLayout>
   );
 }
-
