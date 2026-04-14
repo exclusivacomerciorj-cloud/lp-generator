@@ -13,9 +13,11 @@ import StepGenerate from './screens/StepGenerate';
 import StepResult from './screens/StepResult';
 
 const INITIAL: FormData = {
-  name: '', location: '', typology: '', area: '', parking: '', differentials: '',
+  name: '', location: '', typology: '', area: '', parking: '',
+  differentials: '', description: '',
   lpType: 'neutra', audience: 'misto', mainTrigger: 'localizacao', aggressiveness: 'medio',
   price: '', entry: '', installments: '', highlightConditionTop: false, conditionAsMainArg: false,
+  rentAnual: '', rentMensal: '', prazoObra: '', perfilAluguel: '', resumoInvestimento: '',
   strongPoints: [],
   primaryColor: '#1a3a5c', secondaryColor: '#c9a84c', style: 'sofisticado',
   animations: true, arrows: true, hasVideo: false, videoUrl: '', videoType: 'drone',
@@ -32,24 +34,10 @@ export default function App() {
 
   const updateForm = (data: Partial<FormData>) => setForm(prev => ({ ...prev, ...data }));
   const goTo = (s: Screen) => setScreen(s);
-
   const startNew = () => { setForm(INITIAL); setGeneratedLPs([]); goTo('product'); };
-
-  const editLP = (lp: GeneratedLP) => {
-    if (lp.formData) setForm(lp.formData);
-    setGeneratedLPs([lp]);
-    goTo('result');
-  };
-
-  const saveLP = (lps: GeneratedLP[]) => {
-    setSavedLPs(prev => {
-      const filtered = prev.filter(p => !lps.find(l => l.id === p.id));
-      return [...filtered, ...lps];
-    });
-  };
-
+  const editLP = (lp: GeneratedLP) => { if (lp.formData) setForm(lp.formData); setGeneratedLPs([lp]); goTo('result'); };
+  const saveLP = (lps: GeneratedLP[]) => setSavedLPs(prev => { const filtered = prev.filter(p => !lps.find(l => l.id === p.id)); return [...filtered, ...lps]; });
   const deleteLP = (id: string) => setSavedLPs(prev => prev.filter(p => p.id !== id));
-
   const sharedProps = { form, updateForm, goTo, generatedLPs, setGeneratedLPs };
 
   return (
@@ -63,14 +51,7 @@ export default function App() {
       {screen === 'experience' && <StepExperience {...sharedProps} />}
       {screen === 'variations' && <StepVariations {...sharedProps} />}
       {screen === 'generate' && <StepGenerate {...sharedProps} />}
-      {screen === 'result' && (
-        <StepResult
-          {...sharedProps}
-          onSave={saveLP}
-          onBackToDashboard={() => { saveLP(generatedLPs); goTo('dashboard'); }}
-        />
-      )}
+      {screen === 'result' && <StepResult {...sharedProps} onSave={saveLP} onBackToDashboard={() => { saveLP(generatedLPs); goTo('dashboard'); }} />}
     </div>
   );
 }
-

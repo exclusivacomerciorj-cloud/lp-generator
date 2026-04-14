@@ -14,6 +14,7 @@ export interface FormData {
   area: string;
   parking: string;
   differentials: string;
+  description: string;
   lpType: 'moradia' | 'investimento' | 'neutra';
   audience: 'moradia' | 'investidor' | 'misto';
   mainTrigger: 'preco' | 'localizacao' | 'vista' | 'condicao';
@@ -23,6 +24,11 @@ export interface FormData {
   installments: string;
   highlightConditionTop: boolean;
   conditionAsMainArg: boolean;
+  rentAnual: string;
+  rentMensal: string;
+  prazoObra: string;
+  perfilAluguel: string;
+  resumoInvestimento: string;
   strongPoints: string[];
   primaryColor: string;
   secondaryColor: string;
