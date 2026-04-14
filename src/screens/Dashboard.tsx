@@ -44,7 +44,7 @@ export default function Dashboard({ savedLPs, onNew, onEdit, onDelete }: Props) 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, color: '#0f1923' }}>E</div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>Exclusiva ImobiliÃ¡ria Rio</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>Exclusiva Imobiliaria Rio</div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Gerador de Landing Pages</div>
           </div>
         </div>
@@ -91,8 +91,8 @@ export default function Dashboard({ savedLPs, onNew, onEdit, onDelete }: Props) 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 40 }}>
           {[
             { label: 'LPs criadas', value: savedLPs.length, color: '#fff' },
-            { label: 'VersÃµes Investidor', value: savedLPs.filter(l => l.type === 'investimento').length, color: '#c9a84c' },
-            { label: 'VersÃµes Moradia', value: savedLPs.filter(l => l.type === 'moradia').length, color: 'rgba(255,255,255,0.5)' },
+            { label: 'Versoes Investidor', value: savedLPs.filter(l => l.type === 'investimento').length, color: '#c9a84c' },
+            { label: 'Versoes Moradia', value: savedLPs.filter(l => l.type === 'moradia').length, color: 'rgba(255,255,255,0.5)' },
           ].map(stat => (
             <div key={stat.label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 20 }}>
               <div style={{ fontSize: 32, fontWeight: 800, color: stat.color }}>{stat.value}</div>
@@ -163,6 +163,7 @@ export default function Dashboard({ savedLPs, onNew, onEdit, onDelete }: Props) 
     </div>
   );
 }
+
 
 
 
