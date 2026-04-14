@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Screen } from '../components/StepLayout';
 import { FormData, GeneratedLP } from '../types';
 import { getApiKey } from '../lib/lpGenerator';
@@ -41,8 +41,8 @@ export default function StepResult({ form, goTo, generatedLPs, setGeneratedLPs, 
     setRefineError('');
     try {
       const apiKey = getApiKey();
-      if (!apiKey) throw new Error('API key não configurada. Volte ao dashboard e configure.');
-      const response = await fetch('/api/claude', {
+      if (!apiKey) throw new Error('API key nÃ£o configurada. Volte ao dashboard e configure.');
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,12 +53,12 @@ export default function StepResult({ form, goTo, generatedLPs, setGeneratedLPs, 
           max_tokens: 8000,
           messages: [{
             role: 'user',
-            content: `Você é especialista em landing pages imobiliárias de alta conversão. Receberá um HTML completo e uma instrução de ajuste. Responda APENAS com o HTML completo modificado. Sem explicações, sem markdown, sem blocos de código. Apenas HTML bruto começando com <!DOCTYPE html>.
+            content: `VocÃª Ã© especialista em landing pages imobiliÃ¡rias de alta conversÃ£o. ReceberÃ¡ um HTML completo e uma instruÃ§Ã£o de ajuste. Responda APENAS com o HTML completo modificado. Sem explicaÃ§Ãµes, sem markdown, sem blocos de cÃ³digo. Apenas HTML bruto comeÃ§ando com <!DOCTYPE html>.
 
 HTML atual:
 ${active.html}
 
-INSTRUÇÃO DE AJUSTE:
+INSTRUÃ‡ÃƒO DE AJUSTE:
 ${refinePrompt}
 
 Gere o HTML completo atualizado:`,
@@ -96,10 +96,10 @@ Gere o HTML completo atualizado:`,
       {/* Header */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => goTo('variations')} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer' }}>← Voltar</button>
+          <button onClick={() => goTo('variations')} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer' }}>â† Voltar</button>
           <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)' }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>{form.name}</span>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>— {generatedLPs.length} versão{generatedLPs.length !== 1 ? 'ões' : ''}</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>â€” {generatedLPs.length} versÃ£o{generatedLPs.length !== 1 ? 'Ãµes' : ''}</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={handleSave} style={{
@@ -108,10 +108,10 @@ Gere o HTML completo atualizado:`,
             background: saved ? 'rgba(34,197,94,0.1)' : 'none',
             color: saved ? '#4ade80' : 'rgba(255,255,255,0.6)',
           }}>
-            {saved ? '✓ Salvo' : 'Salvar'}
+            {saved ? 'âœ“ Salvo' : 'Salvar'}
           </button>
           <button onClick={onBackToDashboard} style={{ padding: '8px 16px', background: '#c9a84c', color: '#0f1923', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            Dashboard →
+            Dashboard â†’
           </button>
         </div>
       </div>
@@ -140,12 +140,12 @@ Gere o HTML completo atualizado:`,
             border: `1px solid ${previewMode === m ? 'rgba(255,255,255,0.2)' : 'transparent'}`,
             color: previewMode === m ? '#fff' : 'rgba(255,255,255,0.3)', cursor: 'pointer', textTransform: 'capitalize',
           }}>
-            {m === 'desktop' ? '🖥' : '📱'} {m}
+            {m === 'desktop' ? 'ðŸ–¥' : 'ðŸ“±'} {m}
           </button>
         ))}
         <div style={{ flex: 1 }} />
         <button onClick={() => download(active)} style={{ padding: '5px 14px', borderRadius: 6, fontSize: 11, background: '#c9a84c', color: '#0f1923', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
-          ⬇ Baixar HTML
+          â¬‡ Baixar HTML
         </button>
       </div>
 
@@ -189,7 +189,7 @@ Gere o HTML completo atualizado:`,
           {generatedLPs.length > 1 && (
             <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <button onClick={() => generatedLPs.forEach(lp => download(lp))} style={{ width: '100%', padding: '9px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer' }}>
-                Baixar todas as versões ({generatedLPs.length})
+                Baixar todas as versÃµes ({generatedLPs.length})
               </button>
             </div>
           )}
@@ -202,7 +202,7 @@ Gere o HTML completo atualizado:`,
             </p>
             <textarea
               style={{ flex: 1, minHeight: 120, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '12px', color: '#fff', fontSize: 12, outline: 'none', resize: 'none', lineHeight: 1.5 }}
-              placeholder={'Ex:\n- Mudar headline para focar na vista\n- Botões mais chamativos\n- Mais urgência no bloco de condição'}
+              placeholder={'Ex:\n- Mudar headline para focar na vista\n- BotÃµes mais chamativos\n- Mais urgÃªncia no bloco de condiÃ§Ã£o'}
               value={refinePrompt}
               onChange={e => setRefinePrompt(e.target.value)}
             />
@@ -223,7 +223,7 @@ Gere o HTML completo atualizado:`,
                   <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite' }} />
                   Refinando...
                 </>
-              ) : '✦ Refinar esta versão'}
+              ) : 'âœ¦ Refinar esta versÃ£o'}
             </button>
           </div>
         </div>
@@ -232,3 +232,5 @@ Gere o HTML completo atualizado:`,
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+﻿import { useRef, useState } from 'react';
 import StepLayout, { Screen } from '../components/StepLayout';
 import { FormData, ImageFile } from '../types';
 import { getApiKey } from '../lib/lpGenerator';
@@ -45,22 +45,22 @@ interface AutoFillResult {
 }
 
 async function fetchProductInfo(name: string, apiKey: string): Promise<AutoFillResult> {
-  const prompt = `Você é um assistente especialista em pesquisa de lançamentos imobiliários no Brasil.
+  const prompt = `VocÃª Ã© um assistente especialista em pesquisa de lanÃ§amentos imobiliÃ¡rios no Brasil.
 
-Pesquise na web todas as informações disponíveis sobre o empreendimento imobiliário chamado: "${name}"
+Pesquise na web todas as informaÃ§Ãµes disponÃ­veis sobre o empreendimento imobiliÃ¡rio chamado: "${name}"
 
-Após pesquisar, retorne APENAS um JSON válido com estas informações (deixe "" se não encontrar):
+ApÃ³s pesquisar, retorne APENAS um JSON vÃ¡lido com estas informaÃ§Ãµes (deixe "" se nÃ£o encontrar):
 
 {
   "found": true,
   "location": "Bairro, Cidade - UF",
   "typology": "ex: Apartamentos de 2 e 3 quartos",
-  "area": "ex: 65m² a 88m²",
+  "area": "ex: 65mÂ² a 88mÂ²",
   "parking": "ex: 1 a 2 vagas",
   "price": "ex: R$ 800.000",
   "entry": "ex: R$ 49.000",
-  "installments": "ex: R$ 1.900/mês durante a obra",
-  "differentials": "Descrição completa dos diferenciais: lazer, infraestrutura, localização, sustentabilidade...",
+  "installments": "ex: R$ 1.900/mÃªs durante a obra",
+  "differentials": "DescriÃ§Ã£o completa dos diferenciais: lazer, infraestrutura, localizaÃ§Ã£o, sustentabilidade...",
   "strongPoints": ["Ponto forte 1", "Ponto forte 2", "Ponto forte 3", "Ponto forte 4", "Ponto forte 5"],
   "lpType": "moradia ou investimento ou neutra",
   "mainTrigger": "preco ou localizacao ou vista ou condicao",
@@ -69,12 +69,12 @@ Após pesquisar, retorne APENAS um JSON válido com estas informações (deixe "
 
 REGRAS:
 - Retorne SOMENTE o JSON, sem texto antes ou depois, sem markdown
-- Se não encontrar, retorne {"found": false}
+- Se nÃ£o encontrar, retorne {"found": false}
 - strongPoints: tags curtas (ex: "Varanda gourmet", "Vista para o mar")
 - lpType: studios/compactos = "investimento", 3+ quartos familiar = "moradia", misto = "neutra"
-- mainTrigger: preço especial = "preco", localização = "localizacao", vista = "vista", condição = "condicao"`;
+- mainTrigger: preÃ§o especial = "preco", localizaÃ§Ã£o = "localizacao", vista = "vista", condiÃ§Ã£o = "condicao"`;
 
-  const response = await fetch('/api/claude', {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ REGRAS:
 
   const data = await response.json() as { content?: { type: string; text?: string }[] };
 
-  // Pega o último bloco de texto — resposta final após a busca
+  // Pega o Ãºltimo bloco de texto â€” resposta final apÃ³s a busca
   const textBlocks = (data.content ?? []).filter(b => b.type === 'text' && b.text);
   const lastText = textBlocks[textBlocks.length - 1]?.text ?? '';
 
@@ -144,24 +144,24 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
 
     try {
       const apiKey = getApiKey();
-      if (!apiKey) throw new Error('API key não configurada. Volte ao dashboard e configure.');
+      if (!apiKey) throw new Error('API key nÃ£o configurada. Volte ao dashboard e configure.');
       const result = await fetchProductInfo(form.name.trim(), apiKey);
 
       if (!result.found) {
         setSearchStatus('notfound');
-        setSearchMsg('Não encontrei informações sobre esse empreendimento na web. Preencha os campos manualmente.');
+        setSearchMsg('NÃ£o encontrei informaÃ§Ãµes sobre esse empreendimento na web. Preencha os campos manualmente.');
         return;
       }
 
       const updates: Partial<FormData> = {};
       const filled: string[] = [];
 
-      if (result.location)     { updates.location     = result.location;     filled.push('Localização'); }
+      if (result.location)     { updates.location     = result.location;     filled.push('LocalizaÃ§Ã£o'); }
       if (result.typology)     { updates.typology     = result.typology;     filled.push('Tipologia'); }
       if (result.area)         { updates.area         = result.area;         filled.push('Metragem'); }
       if (result.parking)      { updates.parking      = result.parking;      filled.push('Vagas'); }
       if (result.differentials){ updates.differentials= result.differentials; filled.push('Diferenciais'); }
-      if (result.price)        { updates.price        = result.price;        filled.push('Preço'); }
+      if (result.price)        { updates.price        = result.price;        filled.push('PreÃ§o'); }
       if (result.entry)        { updates.entry        = result.entry;        filled.push('Entrada'); }
       if (result.installments) { updates.installments = result.installments; filled.push('Parcelas'); }
       if (result.lpType)       { updates.lpType       = result.lpType;       filled.push('Tipo de LP'); }
@@ -174,7 +174,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
       updateForm(updates);
       setFilledFields(filled);
       setSearchStatus('found');
-      setSearchMsg(result.summary ?? 'Informações preenchidas. Confira e ajuste se necessário.');
+      setSearchMsg(result.summary ?? 'InformaÃ§Ãµes preenchidas. Confira e ajuste se necessÃ¡rio.');
     } catch (err: unknown) {
       setSearchStatus('error');
       setSearchMsg('Erro ao buscar: ' + String(err));
@@ -184,15 +184,15 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
   };
 
   const statusStyle = {
-    found:    { bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.25)',   color: '#4ade80', icon: '✓' },
-    notfound: { bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.25)',  color: '#fbbf24', icon: '⚠️' },
-    error:    { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)',   color: '#f87171', icon: '✕' },
+    found:    { bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.25)',   color: '#4ade80', icon: 'âœ“' },
+    notfound: { bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.25)',  color: '#fbbf24', icon: 'âš ï¸' },
+    error:    { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)',   color: '#f87171', icon: 'âœ•' },
   };
 
   return (
     <StepLayout
       title="Dados do Produto"
-      subtitle="Informações básicas do empreendimento"
+      subtitle="InformaÃ§Ãµes bÃ¡sicas do empreendimento"
       currentStep="product"
       goTo={goTo}
       onBack={() => goTo('dashboard')}
@@ -201,7 +201,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* Nome + botão busca */}
+        {/* Nome + botÃ£o busca */}
         <div>
           <label style={labelStyle}>Nome do Empreendimento *</label>
           <div style={{ display: 'flex', gap: 10 }}>
@@ -236,11 +236,11 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
                   <div style={{ width: 13, height: 13, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: 'rgba(255,255,255,0.7)', animation: 'lp-spin 0.7s linear infinite' }} />
                   Buscando...
                 </>
-              ) : <>🔍 Buscar informações</>}
+              ) : <>ðŸ” Buscar informaÃ§Ãµes</>}
             </button>
           </div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 6 }}>
-            Digite o nome e clique em buscar — a IA pesquisa na web e preenche os campos automaticamente
+            Digite o nome e clique em buscar â€” a IA pesquisa na web e preenche os campos automaticamente
           </div>
         </div>
 
@@ -250,7 +250,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
             <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(201,168,76,0.3)', borderTopColor: '#c9a84c', animation: 'lp-spin 0.7s linear infinite', flexShrink: 0 }} />
             <div>
               <div style={{ fontSize: 12, color: '#c9a84c', fontWeight: 600 }}>Pesquisando na web...</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>Buscando localização, tipologia, metragem, preços e diferenciais</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>Buscando localizaÃ§Ã£o, tipologia, metragem, preÃ§os e diferenciais</div>
             </div>
           </div>
         )}
@@ -270,7 +270,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
                     {filledFields.map(f => (
                       <span key={f} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 99, background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}>
-                        ✓ {f}
+                        âœ“ {f}
                       </span>
                     ))}
                   </div>
@@ -282,19 +282,19 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
 
         {/* Campos */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <Field label="Localização *" placeholder="Ex: Barra da Tijuca, Rio de Janeiro" value={form.location} onChange={v => updateForm({ location: v })} />
+          <Field label="LocalizaÃ§Ã£o *" placeholder="Ex: Barra da Tijuca, Rio de Janeiro" value={form.location} onChange={v => updateForm({ location: v })} />
           <Field label="Tipologia" placeholder="Ex: Apartamentos de 2 e 3 quartos" value={form.typology} onChange={v => updateForm({ typology: v })} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-          <Field label="Metragem" placeholder="Ex: 65m² a 88m²" value={form.area} onChange={v => updateForm({ area: v })} />
+          <Field label="Metragem" placeholder="Ex: 65mÂ² a 88mÂ²" value={form.area} onChange={v => updateForm({ area: v })} />
           <Field label="Vagas" placeholder="Ex: 1 a 2 vagas" value={form.parking} onChange={v => updateForm({ parking: v })} />
-          <Field label="Preço (a partir de)" placeholder="Ex: R$ 800.000" value={form.price} onChange={v => updateForm({ price: v })} />
+          <Field label="PreÃ§o (a partir de)" placeholder="Ex: R$ 800.000" value={form.price} onChange={v => updateForm({ price: v })} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <Field label="Entrada (a partir de)" placeholder="Ex: R$ 49.000" value={form.entry} onChange={v => updateForm({ entry: v })} />
-          <Field label="Parcelas (a partir de)" placeholder="Ex: R$ 1.900/mês" value={form.installments} onChange={v => updateForm({ installments: v })} />
+          <Field label="Parcelas (a partir de)" placeholder="Ex: R$ 1.900/mÃªs" value={form.installments} onChange={v => updateForm({ installments: v })} />
         </div>
 
         <Field
@@ -309,7 +309,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
         {form.strongPoints.length > 0 && (
           <div style={{ padding: '14px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }}>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-              Pontos fortes identificados — editáveis na etapa 4
+              Pontos fortes identificados â€” editÃ¡veis na etapa 4
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
               {form.strongPoints.map(pt => (
@@ -321,13 +321,13 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
           </div>
         )}
 
-        {/* Config técnica */}
+        {/* Config tÃ©cnica */}
         <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ ...labelStyle, marginBottom: 14 }}>Configuração Técnica</div>
+          <div style={{ ...labelStyle, marginBottom: 14 }}>ConfiguraÃ§Ã£o TÃ©cnica</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
             <Field label="WhatsApp" placeholder="5521990975268" value={form.whatsapp} onChange={v => updateForm({ whatsapp: v })} />
             <Field label="Meta Pixel ID" placeholder="952987786056843" value={form.pixelId} onChange={v => updateForm({ pixelId: v })} />
-            <Field label="E-mail Formulário" placeholder="seu@email.com" value={form.formEmail} onChange={v => updateForm({ formEmail: v })} />
+            <Field label="E-mail FormulÃ¡rio" placeholder="seu@email.com" value={form.formEmail} onChange={v => updateForm({ formEmail: v })} />
           </div>
         </div>
 
@@ -340,9 +340,9 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
             onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.4)')}
             onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
           >
-            <div style={{ fontSize: 28, marginBottom: 8 }}>📸</div>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>ðŸ“¸</div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Clique para fazer upload das imagens</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>Fachada, lazer, planta, área interna...</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>Fachada, lazer, planta, Ã¡rea interna...</div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImages} />
 
@@ -360,7 +360,7 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
                   <button
                     onClick={() => updateForm({ images: form.images.filter(i => i.id !== img.id) })}
                     style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: '#ef4444', border: 'none', color: '#fff', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >✕</button>
+                  >âœ•</button>
                 </div>
               ))}
             </div>
@@ -372,3 +372,5 @@ export default function StepProduct({ form, updateForm, goTo }: Props) {
     </StepLayout>
   );
 }
+
+
