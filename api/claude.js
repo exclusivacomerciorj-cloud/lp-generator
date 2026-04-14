@@ -8,23 +8,39 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  // Usa env var do Vercel ou key passada pelo cliente
   const apiKey = process.env.ANTHROPIC_API_KEY || req.headers['x-api-key'];
   if (!apiKey) return res.status(400).json({ error: { message: 'API key não configurada' } });
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Usa streaming para evitar timeout
+    const body = { ...req.body, stream: true };
+
+    const upstream = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(req.body),
+      body: JSON.stringify(body),
     });
 
-    const text = await response.text();
-    res.status(response.status).setHeader('Content-Type', 'application/json').send(text);
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.status(200);
+
+    // Faz pipe direto do stream da Anthropic para o cliente
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(decoder.decode(value, { stream: true }));
+    }
+
+    res.end();
   } catch (err) {
     res.status(500).json({ error: { message: String(err) } });
   }
