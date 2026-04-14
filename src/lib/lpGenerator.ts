@@ -57,7 +57,7 @@ Retorne exatamente este JSON:
   "diff3desc": "descricao diferencial 3",
   "diff4title": "titulo diferencial 4",
   "diff4desc": "descricao diferencial 4",
-  "escassez": "frase de escassez",
+  "escassez": "frase de escassez BASEADA APENAS nos pontos fortes e diferenciais informados, NUNCA inventar numeros ou unidades, usar frases como Condicoes especiais de lancamento ou Oportunidade unica na regiao",
   "formTitle": "titulo do formulario",
   "formSubtitle": "subtitulo do formulario",
   "ctaText": "texto do botao CTA"
@@ -108,7 +108,7 @@ export async function generateLP(form: FormData, opts: GenerateOptions): Promise
     : `linear-gradient(135deg, ${pc} 0%, #0a1628 100%)`;
 
   const logoHtml = form.logoType === 'image' && form.logoBase64
-    ? `<img src="${form.logoBase64}" alt="${form.name}" style="height:48px;object-fit:contain;">`
+    ? `<img src="${form.logoBase64}" alt="${form.name}" style="height:80px;object-fit:contain;">`
     : `<span style="font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);color:${sc};letter-spacing:4px;font-weight:700;text-transform:uppercase;">✦ ${form.name} ✦</span>`;
 
   const conditionBox = opts.showPrice && (form.entry || form.installments) ? `
@@ -171,7 +171,7 @@ body{font-family:'Inter',sans-serif;color:#222;overflow-x:hidden}
 .hero-subtitle{font-family:'Playfair Display',serif;font-style:italic;color:rgba(255,255,255,0.8);font-size:clamp(13px,2vw,16px);margin-bottom:24px;}
 .hero-arrow{font-size:26px;color:${sc};animation:bounce 1.5s infinite;margin-bottom:18px;display:block;}
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
-.btn-cta{display:inline-block;background:linear-gradient(135deg,${sc},${sc}dd);color:#0a1628;font-weight:800;font-size:clamp(13px,2vw,16px);padding:15px 36px;border-radius:4px;text-decoration:none;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:all 0.3s;text-transform:uppercase;letter-spacing:1px;font-family:'Inter',sans-serif;}
+.btn-cta{display:inline-block;background:linear-gradient(135deg,${sc},${sc}dd);color:#0a1628;font-weight:800;font-size:clamp(13px,2vw,16px);padding:15px 36px;border-radius:4px;text-decoration:none;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:all 0.3s;font-family:'Inter',sans-serif;}
 .btn-cta:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,0.4);}
 .benefits{background:#fff;padding:28px 20px;box-shadow:0 4px 16px rgba(0,0,0,0.07);position:relative;z-index:3;}
 .benefits-grid{display:flex;max-width:900px;margin:0 auto;justify-content:space-around;align-items:center;gap:16px;flex-wrap:wrap;}
@@ -333,3 +333,6 @@ document.querySelector('.btn-cta').addEventListener('click',function(e){
 
   return html;
 }
+
+
+
