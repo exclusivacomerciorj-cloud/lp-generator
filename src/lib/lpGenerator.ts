@@ -649,9 +649,7 @@ export async function generateLP(form: FormData, opts: GenerateOptions): Promise
 
 export async function publishLP(name: string, html: string): Promise<string> {
   const githubToken = getGithubToken();
-  const vercelToken = getVercelToken();
   if (!githubToken) throw new Error('Token do GitHub nao configurado.');
-  if (!vercelToken) throw new Error('Token do Vercel nao configurado.');
   const slug = toSlug(name);
   const repoOwner = 'exclusivacomerciorj-cloud';
   const repoName = 'exclusiva-lps';
@@ -668,12 +666,6 @@ export async function publishLP(name: string, html: string): Promise<string> {
     body: JSON.stringify({ message: `deploy: ${name}`, content, ...(sha ? { sha } : {}) }),
   });
   if (!commitRes.ok) { const err = await commitRes.json() as { message?: string }; throw new Error(err.message ?? 'Erro ao fazer commit no GitHub'); }
-  const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${vercelToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: repoName, gitSource: { type: 'github', org: repoOwner, repo: repoName, ref: 'main' }, projectSettings: { framework: null } }),
-  });
-  if (!deployRes.ok) { const err = await deployRes.json() as { error?: { message?: string } }; throw new Error(err.error?.message ?? 'Erro no deploy Vercel'); }
-  const deployData = await deployRes.json() as { url: string };
-  return `https://${deployData.url}/${slug}`;
+  // Vercel deploya automaticamente via GitHub
+  return `https://exclusiva-lps.vercel.app/${slug}`;
 }
